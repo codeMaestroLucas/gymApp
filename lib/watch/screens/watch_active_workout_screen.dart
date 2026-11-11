@@ -35,7 +35,10 @@ class WatchActiveWorkoutScreen extends StatefulWidget {
 
 class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
   late Workout _activeWorkout;
+  late PageController _pageController;
   int _currentExerciseIndex = 0;
+  final Set<int> _completedExerciseIndices = {};
+  bool _showExerciseList = false;
   int _totalExercisesCompleted = 0;
   double _totalVolumeAccumulatedKg = 0;
   final DateTime _startedAt = DateTime.now();
@@ -55,29 +58,32 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
     // Clona o treino para permitir edições em tempo de execução sem afetar
     // o estado global até que o atleta clique em "Salvar Treino"
     _activeWorkout = widget.workout.clone();
+    _pageController = PageController(initialPage: 0);
   }
 
   @override
   void dispose() {
     _restTimer?.cancel();
+    _pageController.dispose();
     super.dispose();
   }
 
-  Exercise get _currentExercise => _activeWorkout.exercises[_currentExerciseIndex];
-
-  void _onCompleteExercise() {
+  void _onCompleteExercise([int? targetIndex]) {
     HapticFeedback.heavyImpact();
+    final index = targetIndex ?? _currentExerciseIndex;
+    final ex = _activeWorkout.exercises[index];
 
     setState(() {
-      _totalExercisesCompleted++;
-      _totalVolumeAccumulatedKg += (_currentExercise.weightKg * _currentExercise.reps);
+      if (!_completedExerciseIndices.contains(index)) {
+        _completedExerciseIndices.add(index);
+        _totalExercisesCompleted++;
+        _totalVolumeAccumulatedKg += (ex.weightKg * ex.reps);
+      }
 
-      if (_currentExerciseIndex < _activeWorkout.exercises.length - 1) {
-        _currentExerciseIndex++;
-        _startRest(_currentExercise.restSeconds);
-      } else {
-        // Treino completo!
+      if (_completedExerciseIndices.length >= _activeWorkout.exercises.length) {
         _finishWorkout();
+      } else {
+        _startRest(ex.restSeconds);
       }
     });
   }
@@ -101,11 +107,43 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
         Future.delayed(const Duration(milliseconds: 180), () {
           HapticFeedback.lightImpact();
         });
-        setState(() {
-          _isResting = false;
-        });
+        _onRestFinished();
       }
     });
+  }
+
+  void _onRestFinished() {
+    setState(() {
+      _isResting = false;
+    });
+
+    // Encontra o próximo exercício pendente
+    int nextIndex = -1;
+    for (int i = _currentExerciseIndex + 1; i < _activeWorkout.exercises.length; i++) {
+      if (!_completedExerciseIndices.contains(i)) {
+        nextIndex = i;
+        break;
+      }
+    }
+    if (nextIndex == -1) {
+      for (int i = 0; i < _activeWorkout.exercises.length; i++) {
+        if (!_completedExerciseIndices.contains(i)) {
+          nextIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (nextIndex != -1 && nextIndex != _currentExerciseIndex) {
+      _currentExerciseIndex = nextIndex;
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          nextIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
   }
 
   void _adjustRestTime(int deltaSeconds) {
@@ -117,33 +155,37 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
   void _skipRest() {
     _restTimer?.cancel();
     HapticFeedback.selectionClick();
+    _onRestFinished();
+  }
+
+  /// Permite modificar a carga (peso em kg) do exercício durante o treino
+  void _adjustWeight(double delta, [int? targetIndex]) {
+    HapticFeedback.selectionClick();
+    final index = targetIndex ?? _currentExerciseIndex;
     setState(() {
-      _isResting = false;
+      final ex = _activeWorkout.exercises[index];
+      final newWeight = (ex.weightKg + delta).clamp(1.0, 500.0);
+      ex.weightKg = (newWeight * 2).round() / 2; // Arredonda para 0.5 kg
     });
   }
 
-  /// Permite modificar a carga (peso em kg) do exercício atual durante o treino
-  void _adjustWeight(double delta) {
+  /// Permite modificar o número de repetições (1 a 3 reps)
+  void _adjustReps(int delta, [int? targetIndex]) {
     HapticFeedback.selectionClick();
+    final index = targetIndex ?? _currentExerciseIndex;
     setState(() {
-      final newWeight = (_currentExercise.weightKg + delta).clamp(1.0, 500.0);
-      _currentExercise.weightKg = (newWeight * 2).round() / 2; // Arredonda para 0.5 kg
-    });
-  }
-
-  /// Permite modificar o número de repetições (1 a 3 reps - apenas repetições conforme solicitado)
-  void _adjustReps(int delta) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      final newReps = (_currentExercise.reps + delta).clamp(1, 3);
-      _currentExercise.reps = newReps;
-      _currentExercise.sets = newReps;
+      final ex = _activeWorkout.exercises[index];
+      final newReps = (ex.reps + delta).clamp(1, 3);
+      ex.reps = newReps;
+      ex.sets = newReps;
     });
   }
 
   /// Diálogo limpo e compacto de observação (sugestões removidas para economizar espaço na tela do relógio)
-  void _openObservationModal() {
-    final noteCtrl = TextEditingController(text: _currentExercise.observations);
+  void _openObservationModal([int? targetIndex]) {
+    final index = targetIndex ?? _currentExerciseIndex;
+    final ex = _activeWorkout.exercises[index];
+    final noteCtrl = TextEditingController(text: ex.observations);
 
     showDialog(
       context: context,
@@ -200,7 +242,7 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
                         onPressed: () {
                           HapticFeedback.lightImpact();
                           setState(() {
-                            _currentExercise.observations = '';
+                            ex.observations = '';
                           });
                           Navigator.of(ctx).pop();
                         },
@@ -224,7 +266,7 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
                         onPressed: () {
                           HapticFeedback.lightImpact();
                           setState(() {
-                            _currentExercise.observations = noteCtrl.text.trim();
+                            ex.observations = noteCtrl.text.trim();
                           });
                           Navigator.of(ctx).pop();
                         },
@@ -314,42 +356,65 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
 
   // --- TELA DO EXERCÍCIO ATIVO ---
   Widget _buildActiveExerciseView() {
-    final ex = _currentExercise;
-    final imagePath = ex.imageUrl ??
-        ExerciseImageService.getImageForExercise(
-          exerciseName: ex.name,
-          primaryMuscleGroup: ex.primaryMuscleGroup,
-          diagramType: ex.diagramType,
-        ) ??
-        'source/imgs/exercicies/peito/0.png';
+    if (_showExerciseList) {
+      return _buildExerciseListView();
+    }
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: WatchScreenContainer(
         isCircular: widget.isCircular,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              // Top Bar: Indicador de Exercício, Concluir Treino antecipado, e Detalhes
-              Row(
+        child: Column(
+          children: [
+            // Top Bar: Sair, Indicador de Progresso com atalho para Lista de Exercícios, e Finalizar Treino
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 4),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   InkWell(
                     onTap: () => _confirmExitWorkout(),
-                    child: const Icon(Icons.close_rounded, size: 16, color: AppColors.textSecondary),
-                  ),
-                  Text(
-                    'EX ${ _currentExerciseIndex + 1 }/${_activeWorkout.exercises.length}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryOrange,
+                    borderRadius: BorderRadius.circular(12),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close_rounded, size: 16, color: AppColors.textSecondary),
                     ),
                   ),
-                  // Botão para finalizar treino a qualquer momento e ir para tela de Salvar
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _showExerciseList = true;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.cardBorder, width: 0.8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'EX ${_currentExerciseIndex + 1}/${_activeWorkout.exercises.length}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryOrange,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          const Icon(Icons.format_list_bulleted_rounded, size: 11, color: AppColors.textSecondary),
+                        ],
+                      ),
+                    ),
+                  ),
                   InkWell(
                     onTap: () => _finishWorkout(),
+                    borderRadius: BorderRadius.circular(6),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
@@ -363,185 +428,539 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
                           SizedBox(width: 2),
                           Text(
                             'Fim',
-                            style: TextStyle(fontSize: 8.5, color: AppColors.primaryOrange, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 3),
-
-              // Imagem Oficial do Exercício Ampliada (source/imgs/exercicies)
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => WatchExerciseDetailScreen(
-                        exercise: ex,
-                        isCircular: widget.isCircular,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  height: 70,
-                  width: 100,
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.5), width: 1.2),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Image.asset(
-                        imagePath,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.fitness_center_rounded,
-                          color: AppColors.primaryOrange,
-                          size: 26,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 3),
-
-              // Nome do Exercício
-              Text(
-                ex.name,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              // Ajuste Interativo de Peso (Carga) e Repetições (1 a 3 reps - apenas repetições)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Modificador de Carga (kg)
-                  _buildInteractiveMetric(
-                    label: 'CARGA',
-                    value: ex.weightKg.toStringAsFixed(ex.weightKg % 1 == 0 ? 0 : 1),
-                    unit: 'kg',
-                    color: AppColors.primaryOrange,
-                    onDecrement: () => _adjustWeight(-2.5),
-                    onIncrement: () => _adjustWeight(2.5),
-                  ),
-                  const SizedBox(width: 8),
-                  // Modificador de Repetições (1 a 3 reps)
-                  _buildInteractiveMetric(
-                    label: 'REPETIÇÕES',
-                    value: '${ex.reps}',
-                    unit: 'reps',
-                    color: AppColors.accentYellow,
-                    onDecrement: () => _adjustReps(-1),
-                    onIncrement: () => _adjustReps(1),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 4),
-
-              // Botão de Observações do Exercício (Permite alterar observações na hora)
-              InkWell(
-                onTap: _openObservationModal,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: ex.observations.isNotEmpty
-                          ? AppColors.primaryOrange.withValues(alpha: 0.7)
-                          : AppColors.cardBorder,
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.edit_note_rounded,
-                        size: 13,
-                        color: ex.observations.isNotEmpty ? AppColors.primaryOrange : AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          ex.observations.isEmpty ? 'Obs: + nota' : 'Obs: ${ex.observations}',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: ex.observations.isNotEmpty ? Colors.white : AppColors.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              // Botão de Concluir Exercício
-              SizedBox(
-                width: double.infinity,
-                height: 32,
-                child: ElevatedButton(
-                  onPressed: _onCompleteExercise,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryOrange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle_rounded, size: 14),
-                          SizedBox(width: 4),
-                          Text(
-                            'CONCLUIR EXERCÍCIO',
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.3,
+                              fontSize: 9,
+                              color: AppColors.primaryOrange,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            // Carrossel deslizável (PageView) com cards individuais de cada exercício
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _activeWorkout.exercises.length,
+                onPageChanged: (index) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _currentExerciseIndex = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  return _buildExerciseCard(index, _activeWorkout.exercises[index]);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Card individual de exercício com foto destacada, carga, repetições e conclusão
+  Widget _buildExerciseCard(int index, Exercise ex) {
+    final imagePath = ex.imageUrl ??
+        ExerciseImageService.getImageForExercise(
+          exerciseName: ex.name,
+          primaryMuscleGroup: ex.primaryMuscleGroup,
+          diagramType: ex.diagramType,
+        ) ??
+        'source/imgs/exercicies/peito/0.png';
+
+    final isCompleted = _completedExerciseIndices.contains(index);
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Tag do Grupo Muscular e status se já foi concluído
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundDark,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.cardBorder, width: 0.6),
+                ),
+                child: Text(
+                  ex.primaryMuscleGroup.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 7.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
+              if (isCompleted) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGreen.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.accentGreen, width: 0.8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_rounded, size: 9, color: AppColors.accentGreen),
+                      SizedBox(width: 2),
+                      Text(
+                        'FEITO',
+                        style: TextStyle(
+                          fontSize: 7.5,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.accentGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
+
+          const SizedBox(height: 3),
+
+          // Imagem Oficial do Exercício Ampliada (source/imgs/exercicies)
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => WatchExerciseDetailScreen(
+                    exercise: ex,
+                    isCircular: widget.isCircular,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              height: 68,
+              width: 104,
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDark,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isCompleted
+                      ? AppColors.accentGreen.withValues(alpha: 0.6)
+                      : AppColors.primaryOrange.withValues(alpha: 0.5),
+                  width: 1.2,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Image.asset(
+                    imagePath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.fitness_center_rounded,
+                      color: AppColors.primaryOrange,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 3),
+
+          // Nome do Exercício
+          Text(
+            ex.name,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          // Ajuste Interativo de Peso (Carga) e Repetições (1 a 3 reps)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Modificador de Carga (kg)
+              _buildInteractiveMetric(
+                label: 'CARGA',
+                value: ex.weightKg.toStringAsFixed(ex.weightKg % 1 == 0 ? 0 : 1),
+                unit: 'kg',
+                color: AppColors.primaryOrange,
+                onDecrement: () => _adjustWeight(-2.5, index),
+                onIncrement: () => _adjustWeight(2.5, index),
+              ),
+              const SizedBox(width: 8),
+              // Modificador de Repetições (1 a 3 reps)
+              _buildInteractiveMetric(
+                label: 'REPETIÇÕES',
+                value: '${ex.reps}',
+                unit: 'reps',
+                color: AppColors.accentYellow,
+                onDecrement: () => _adjustReps(-1, index),
+                onIncrement: () => _adjustReps(1, index),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // Botão de Observações do Exercício (Permite alterar observações na hora)
+          InkWell(
+            onTap: () => _openObservationModal(index),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: ex.observations.isNotEmpty
+                      ? AppColors.primaryOrange.withValues(alpha: 0.7)
+                      : AppColors.cardBorder,
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.edit_note_rounded,
+                    size: 13,
+                    color: ex.observations.isNotEmpty ? AppColors.primaryOrange : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      ex.observations.isEmpty ? 'Obs: + nota' : 'Obs: ${ex.observations}',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: ex.observations.isNotEmpty ? Colors.white : AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // Botão de Concluir Exercício
+          SizedBox(
+            width: double.infinity,
+            height: 32,
+            child: ElevatedButton(
+              onPressed: () => _onCompleteExercise(index),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isCompleted ? AppColors.accentGreen : AppColors.primaryOrange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+                padding: EdgeInsets.zero,
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isCompleted ? Icons.check_circle_rounded : Icons.check_circle_rounded,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isCompleted ? 'CONCLUÍDO (REFAZER)' : 'CONCLUIR EXERCÍCIO',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 3),
+
+          // Indicadores de navegação (setas e bolinhas de progresso)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (index > 0)
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _pageController.previousPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(Icons.chevron_left_rounded, size: 14, color: AppColors.textSecondary),
+                  ),
+                )
+              else
+                const SizedBox(width: 18),
+              const SizedBox(width: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(_activeWorkout.exercises.length, (dotIndex) {
+                  final isCurrent = dotIndex == index;
+                  final isDone = _completedExerciseIndices.contains(dotIndex);
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                    width: isCurrent ? 10 : 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isCurrent
+                          ? AppColors.primaryOrange
+                          : isDone
+                              ? AppColors.accentGreen
+                              : AppColors.cardBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(width: 4),
+              if (index < _activeWorkout.exercises.length - 1)
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textSecondary),
+                  ),
+                )
+              else
+                const SizedBox(width: 18),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+
+  // --- TELA DE LISTA GERAL DE TODOS OS EXERCÍCIOS ---
+  Widget _buildExerciseListView() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: WatchScreenContainer(
+        isCircular: widget.isCircular,
+        child: Column(
+          children: [
+            // Top Bar da lista
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _showExerciseList = false;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.arrow_back_rounded, size: 16, color: AppColors.textSecondary),
+                    ),
+                  ),
+                  const Text(
+                    'EXERCÍCIOS',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => _finishWorkout(),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryOrange.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Fim',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: AppColors.primaryOrange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Lista rolável de todos os exercícios com status e atalho direto
+            Expanded(
+              child: ListView.separated(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                itemCount: _activeWorkout.exercises.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 4),
+                itemBuilder: (context, i) {
+                  final ex = _activeWorkout.exercises[i];
+                  final isDone = _completedExerciseIndices.contains(i);
+                  final isCurrent = i == _currentExerciseIndex;
+
+                  final imagePath = ex.imageUrl ??
+                      ExerciseImageService.getImageForExercise(
+                        exerciseName: ex.name,
+                        primaryMuscleGroup: ex.primaryMuscleGroup,
+                        diagramType: ex.diagramType,
+                      ) ??
+                      'source/imgs/exercicies/peito/0.png';
+
+                  return InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _currentExerciseIndex = i;
+                        _showExerciseList = false;
+                      });
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_pageController.hasClients) {
+                          _pageController.jumpToPage(i);
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? AppColors.primaryOrange.withValues(alpha: 0.15)
+                            : AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isCurrent
+                              ? AppColors.primaryOrange
+                              : isDone
+                                  ? AppColors.accentGreen.withValues(alpha: 0.6)
+                                  : AppColors.cardBorder,
+                          width: isCurrent ? 1.0 : 0.6,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Ícone de status
+                          Icon(
+                            isDone
+                                ? Icons.check_circle_rounded
+                                : isCurrent
+                                    ? Icons.play_circle_fill_rounded
+                                    : Icons.radio_button_unchecked_rounded,
+                            size: 14,
+                            color: isDone
+                                ? AppColors.accentGreen
+                                : isCurrent
+                                    ? AppColors.primaryOrange
+                                    : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 5),
+                          // Miniatura da imagem do exercício
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: AppColors.backgroundDark,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.asset(
+                              imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => const Icon(
+                                Icons.fitness_center_rounded,
+                                size: 12,
+                                color: AppColors.primaryOrange,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Nome e métricas
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ex.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+                                    color: isDone ? AppColors.textSecondary : Colors.white,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${ex.weightKg.toStringAsFixed(ex.weightKg % 1 == 0 ? 0 : 1)}kg • ${ex.reps} reps',
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        color: isCurrent ? AppColors.primaryOrange : AppColors.textSecondary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right_rounded, size: 13, color: AppColors.textSecondary),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

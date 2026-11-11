@@ -283,4 +283,100 @@ void main() {
     expect(find.text('Port Smartwatch (Wearable)'), findsOneWidget);
     expect(find.text('Sincronização Ativa em Tempo Real'), findsOneWidget);
   });
+
+  testWidgets('WatchActiveWorkoutScreen carousel navigation and list view toggle',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 390);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final multiExWorkout = Workout(
+      id: 'multi_test_1',
+      title: 'Treino A',
+      splitTag: 'A',
+      targetMusclesSummary: 'Peito e Tríceps',
+      durationMinutes: 45,
+      daysOfWeek: ['Segunda'],
+      exercises: [
+        Exercise(
+          id: 'ex_1',
+          name: 'Supino Reto com Barra',
+          targetMuscles: ['Peitoral'],
+          primaryMuscleGroup: 'chest',
+          weightKg: 80.0,
+          reps: 3,
+          sets: 3,
+          restSeconds: 30,
+          diagramType: 'bench_press',
+        ),
+        Exercise(
+          id: 'ex_2',
+          name: 'Crucifixo Inclinado',
+          targetMuscles: ['Peitoral Superior'],
+          primaryMuscleGroup: 'chest',
+          weightKg: 24.0,
+          reps: 3,
+          sets: 3,
+          restSeconds: 30,
+          diagramType: 'dumbbell_flyes',
+        ),
+        Exercise(
+          id: 'ex_3',
+          name: 'Tríceps Corda',
+          targetMuscles: ['Tríceps'],
+          primaryMuscleGroup: 'arms',
+          weightKg: 35.0,
+          reps: 3,
+          sets: 3,
+          restSeconds: 30,
+          diagramType: 'triceps_rope',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WatchActiveWorkoutScreen(
+          workout: multiExWorkout,
+          isCircular: true,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Verifica exibição do primeiro exercício no card e indicador EX 1/3
+    expect(find.text('EX 1/3'), findsOneWidget);
+    expect(find.text('Supino Reto com Barra'), findsOneWidget);
+
+    // 1. Abre a visão geral em lista clicando no botão de lista no topo
+    await tester.tap(find.byIcon(Icons.format_list_bulleted_rounded));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('EXERCÍCIOS'), findsOneWidget);
+    expect(find.text('Tríceps Corda'), findsOneWidget);
+
+    // 2. Clica no 3º exercício para pular diretamente para ele no carrossel
+    await tester.tap(find.text('Tríceps Corda'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('EX 3/3'), findsOneWidget);
+    expect(find.text('Tríceps Corda'), findsOneWidget);
+
+    // 3. Conclui o 3º exercício
+    await tester.tap(find.text('CONCLUIR EXERCÍCIO'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Deve entrar na tela de descanso circular com botão pular descanso
+    expect(find.text('PULAR'), findsOneWidget);
+    await tester.tap(find.text('PULAR'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // Deve avançar automaticamente para o próximo exercício pendente (ex_1)
+    expect(find.text('EX 1/3'), findsOneWidget);
+  });
 }
