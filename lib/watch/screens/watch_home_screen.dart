@@ -108,80 +108,87 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> with WidgetsBindingOb
         child: Column(
           children: [
             // Header do Relógio: Hora atual e Status Interativo de Sincronização
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  timeStr,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+            // Em telas circulares, centralizado em linha única protegida contra overflow em relógios compactos
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: widget.isCircular ? 2.0 : 0),
+              child: Row(
+                mainAxisAlignment: widget.isCircular
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    timeStr,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                // Botão / Pill de Sincronização clicável compacto para tela de 192dp
-                Flexible(
-                  child: InkWell(
-                    onTap: _handleManualSync,
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: _isManualSyncing
-                              ? AppColors.primaryOrange
-                              : AppColors.cardBorder,
-                          width: 0.8,
+                  const SizedBox(width: 6),
+                  // Botão / Pill de Sincronização clicável compacto com flexibilidade de largura
+                  Flexible(
+                    child: InkWell(
+                      onTap: _handleManualSync,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _isManualSyncing
+                                ? AppColors.primaryOrange
+                                : AppColors.cardBorder,
+                            width: 0.8,
+                          ),
                         ),
-                      ),
-                      child: ValueListenableBuilder<bool>(
-                        valueListenable: WatchSyncService.instance.isSynced,
-                        builder: (context, synced, _) {
-                          final isBusy = _isManualSyncing || !synced;
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isBusy)
-                                const SizedBox(
-                                  width: 6,
-                                  height: 6,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1.2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryOrange),
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: WatchSyncService.instance.isSynced,
+                          builder: (context, synced, _) {
+                            final isBusy = _isManualSyncing || !synced;
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isBusy)
+                                  const SizedBox(
+                                    width: 6,
+                                    height: 6,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryOrange),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    width: 5,
+                                    height: 5,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Color(0xFF00E676),
+                                    ),
                                   ),
-                                )
-                              else
-                                Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFF00E676),
+                                const SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    isBusy ? 'Sync...' : 'Sincronizado',
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                      color: isBusy ? AppColors.accentYellow : const Color(0xFF00E676),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              const SizedBox(width: 3),
-                              Flexible(
-                                child: Text(
-                                  isBusy ? 'Sync...' : 'Sincronizado',
-                                  style: TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.bold,
-                                    color: isBusy ? AppColors.accentYellow : const Color(0xFF00E676),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             const SizedBox(height: 4),
@@ -253,7 +260,12 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> with WidgetsBindingOb
                     strokeWidth: 2,
                     child: ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                      padding: EdgeInsets.zero,
+                      padding: EdgeInsets.only(
+                        top: 4,
+                        bottom: widget.isCircular ? 24 : 8,
+                        left: widget.isCircular ? 8 : 2,
+                        right: widget.isCircular ? 8 : 2,
+                      ),
                       itemCount: workouts.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 6),
                       itemBuilder: (context, index) {
@@ -270,12 +282,15 @@ class _WatchHomeScreenState extends State<WatchHomeScreen> with WidgetsBindingOb
                               ),
                             );
                           },
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(widget.isCircular ? 18 : 14),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: widget.isCircular ? 12 : 10,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.cardBackground,
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(widget.isCircular ? 18 : 14),
                               border: Border.all(
                                 color: AppColors.cardBorder,
                                 width: 1,

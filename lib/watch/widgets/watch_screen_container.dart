@@ -18,34 +18,44 @@ class WatchScreenContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final isCompact = media.size.shortestSide < 250;
-
-    // Em relógios reais (160-220dp lógicos), o padding deve ser compacto
-    // para evitar perda de área útil e cortes de texto
-    final hPad = isCircular ? (isCompact ? 10.0 : 20.0) : (isCompact ? 6.0 : 12.0);
-    final vPad = isCircular ? (isCompact ? 12.0 : 24.0) : (isCompact ? 8.0 : 14.0);
-
     return Container(
       color: Colors.black,
       child: Center(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(isCircular ? 200 : 36),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: hPad,
-                vertical: vPad,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double size = constraints.maxWidth < constraints.maxHeight
+                ? constraints.maxWidth
+                : constraints.maxHeight;
+
+            // Para relógios circulares (Wear OS / Galaxy Watch / Pixel Watch),
+            // calculamos margens de segurança baseadas no diâmetro da viewport para garantir
+            // que nenhum elemento seja cortado pelos arcos e evitando overflow em relógios compactos (192dp).
+            final double hPad = isCircular
+                ? (size * 0.06).clamp(10.0, 26.0)
+                : (size * 0.03).clamp(6.0, 14.0);
+            final double vPad = isCircular
+                ? (size * 0.08).clamp(12.0, 32.0)
+                : (size * 0.04).clamp(8.0, 16.0);
+
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(isCircular ? (size / 2) : 36),
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: hPad,
+                    vertical: vPad,
+                  ),
+                  child: child,
+                ),
               ),
-              child: child,
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

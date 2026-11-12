@@ -368,7 +368,10 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
           children: [
             // Top Bar: Sair, Indicador de Progresso com atalho para Lista de Exercícios, e Finalizar Treino
             Padding(
-              padding: const EdgeInsets.only(top: 2, bottom: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.isCircular ? 8.0 : 0.0,
+                vertical: 2.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -666,42 +669,45 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
 
           const SizedBox(height: 6),
 
-          // Botão de Concluir Exercício
-          SizedBox(
-            width: double.infinity,
-            height: 32,
-            child: ElevatedButton(
-              onPressed: () => _onCompleteExercise(index),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isCompleted ? AppColors.accentGreen : AppColors.primaryOrange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          // Botão de Concluir Exercício adaptado a telas circulares
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: widget.isCircular ? 14.0 : 0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 32,
+              child: ElevatedButton(
+                onPressed: () => _onCompleteExercise(index),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isCompleted ? AppColors.accentGreen : AppColors.primaryOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(widget.isCircular ? 18 : 12),
+                  ),
+                  elevation: 0,
+                  padding: EdgeInsets.zero,
                 ),
-                elevation: 0,
-                padding: EdgeInsets.zero,
-              ),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isCompleted ? Icons.check_circle_rounded : Icons.check_circle_rounded,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isCompleted ? 'CONCLUÍDO (REFAZER)' : 'CONCLUIR EXERCÍCIO',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.3,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isCompleted ? Icons.check_circle_rounded : Icons.check_circle_rounded,
+                          size: 14,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Text(
+                          isCompleted ? 'CONCLUÍDO (REFAZER)' : 'CONCLUIR EXERCÍCIO',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -786,7 +792,10 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
           children: [
             // Top Bar da lista
             Padding(
-              padding: const EdgeInsets.only(top: 2, bottom: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.isCircular ? 8.0 : 0.0,
+                vertical: 2.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -839,7 +848,12 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
             Expanded(
               child: ListView.separated(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                padding: EdgeInsets.only(
+                  top: 2,
+                  bottom: widget.isCircular ? 24 : 8,
+                  left: widget.isCircular ? 6 : 4,
+                  right: widget.isCircular ? 6 : 4,
+                ),
                 itemCount: _activeWorkout.exercises.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 4),
                 itemBuilder: (context, i) {
@@ -1120,16 +1134,16 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
 
               const SizedBox(height: 6),
 
-              // Botão Pular Descanso
+              // Botão Pular Descanso adaptado para relógios circulares
               SizedBox(
                 height: 28,
                 child: TextButton(
                   onPressed: _skipRest,
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     backgroundColor: AppColors.cardBackground,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(widget.isCircular ? 18 : 10),
                       side: const BorderSide(color: AppColors.cardBorder),
                     ),
                   ),
@@ -1261,22 +1275,27 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
 
               const SizedBox(height: 8),
 
-              // BOTÃO SALVAR TREINO (Ação solicitada pelo usuário)
-              SizedBox(
-                width: double.infinity,
-                height: 34,
-                child: ElevatedButton.icon(
-                  onPressed: _saveWorkoutAndSync,
-                  icon: const Icon(Icons.save_rounded, size: 15),
-                  label: const Text(
-                    'SALVAR TREINO',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.3),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryOrange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: EdgeInsets.zero,
+              // BOTÃO SALVAR TREINO com margens e cantos arredondados adaptados a telas circulares
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: widget.isCircular ? 14.0 : 0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 34,
+                  child: ElevatedButton.icon(
+                    onPressed: _saveWorkoutAndSync,
+                    icon: const Icon(Icons.save_rounded, size: 15),
+                    label: const Text(
+                      'SALVAR TREINO',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.3),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(widget.isCircular ? 20 : 10),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
                 ),
               ),

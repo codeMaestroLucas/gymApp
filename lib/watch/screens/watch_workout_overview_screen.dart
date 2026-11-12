@@ -36,52 +36,55 @@ class WatchWorkoutOverviewScreen extends StatelessWidget {
             isCircular: isCircular,
             child: Column(
               children: [
-                // Header com botão voltar e Split Tag
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.of(context).pop(),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
+                // Header com botão voltar e Split Tag adaptado para bordas circulares
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: isCircular ? 6.0 : 0),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackground,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.cardBorder),
+                          ),
+                          child: const Icon(Icons.arrow_back_ios_new_rounded, size: 10, color: AppColors.textSecondary),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.cardBorder),
+                          color: AppColors.primaryOrange,
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 12, color: AppColors.textSecondary),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryOrange,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        currentWorkout.splitTag,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                        child: Text(
+                          currentWorkout.splitTag,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        currentWorkout.title,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          currentWorkout.title,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 4),
@@ -108,7 +111,12 @@ class WatchWorkoutOverviewScreen extends StatelessWidget {
                 Expanded(
                   child: ListView.separated(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(top: 2, bottom: 6),
+                    padding: EdgeInsets.only(
+                      top: 2,
+                      bottom: isCircular ? 16 : 6,
+                      left: isCircular ? 6 : 0,
+                      right: isCircular ? 6 : 0,
+                    ),
                     itemCount: currentWorkout.exercises.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
@@ -329,42 +337,50 @@ class WatchWorkoutOverviewScreen extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                // Botão Iniciar Treino
-                SizedBox(
-                  width: double.infinity,
-                  height: 34,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => WatchActiveWorkoutScreen(
-                            workout: currentWorkout,
-                            isCircular: isCircular,
+                // Botão Iniciar Treino com curvatura e margens adaptadas a telas circulares
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCircular ? 16.0 : 0,
+                    vertical: isCircular ? 2.0 : 0,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 34,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => WatchActiveWorkoutScreen(
+                              workout: currentWorkout,
+                              isCircular: isCircular,
+                            ),
                           ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryOrange,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(isCircular ? 20 : 12),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryOrange,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.play_arrow_rounded, size: 16),
-                        SizedBox(width: 4),
-                        Text(
-                          'INICIAR TREINO',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.play_arrow_rounded, size: 16),
+                          SizedBox(width: 4),
+                          Text(
+                            'INICIAR TREINO',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.3,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

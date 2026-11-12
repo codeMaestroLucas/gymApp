@@ -48,36 +48,45 @@ class _WatchExerciseDetailScreenState extends State<WatchExerciseDetailScreen> {
         isCircular: widget.isCircular,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.only(
+            top: 2,
+            bottom: widget.isCircular ? 24 : 8,
+            left: widget.isCircular ? 6 : 0,
+            right: widget.isCircular ? 6 : 0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Botão Voltar compacto
-              Align(
-                alignment: Alignment.centerLeft,
-                child: InkWell(
-                  onTap: () => Navigator.of(context).pop(),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackground,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.cardBorder, width: 1),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.arrow_back_ios_new_rounded, size: 12, color: AppColors.textSecondary),
-                        SizedBox(width: 4),
-                        Text(
-                          'Voltar',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
+              // Botão Voltar centralizado ou alinhado de forma segura em telas circulares
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: widget.isCircular ? 8.0 : 0),
+                child: Align(
+                  alignment: widget.isCircular ? Alignment.center : Alignment.centerLeft,
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.cardBorder, width: 1),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.arrow_back_ios_new_rounded, size: 10, color: AppColors.textSecondary),
+                          SizedBox(width: 4),
+                          Text(
+                            'Voltar',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -85,44 +94,46 @@ class _WatchExerciseDetailScreenState extends State<WatchExerciseDetailScreen> {
 
               const SizedBox(height: 6),
 
-              // Mídia Principal (Vídeo formato GIF em loop 1.25x ou Foto Limpa)
-              if (hasVideo)
-                ExerciseVideoPlayer(
-                  videoPath: videoPath,
-                  thumbnailPath: imagePath,
-                  height: 118,
-                  autoPlay: true,
-                  looping: true,
-                  playbackSpeed: 1.75,
-                )
-              else
-                Container(
-                  height: 118,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundDark,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.6), width: 1.5),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Image.asset(
-                        imagePath,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: AppColors.cardBackground,
-                            child: const Center(
-                              child: Icon(Icons.fitness_center_rounded, color: AppColors.primaryOrange, size: 36),
+              // Mídia Principal (Vídeo formato GIF em loop ou Foto Limpa) protegida por margem circular
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: widget.isCircular ? 8.0 : 0),
+                child: hasVideo
+                    ? ExerciseVideoPlayer(
+                        videoPath: videoPath,
+                        thumbnailPath: imagePath,
+                        height: 118,
+                        autoPlay: true,
+                        looping: true,
+                        playbackSpeed: 1.75,
+                      )
+                    : Container(
+                        height: 118,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundDark,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.6), width: 1.5),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: Image.asset(
+                              imagePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: AppColors.cardBackground,
+                                  child: const Center(
+                                    child: Icon(Icons.fitness_center_rounded, color: AppColors.primaryOrange, size: 36),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
+              ),
 
               const SizedBox(height: 8),
 

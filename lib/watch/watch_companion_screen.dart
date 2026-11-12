@@ -171,9 +171,16 @@ class _WatchCompanionScreenState extends State<WatchCompanionScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(_isCircular ? 160 : 36),
-                    child: WatchHomeScreen(
-                      key: ValueKey(_isCircular),
-                      isCircular: _isCircular,
+                    child: Navigator(
+                      key: ValueKey('watch_nav_$_isCircular'),
+                      onGenerateRoute: (settings) {
+                        return MaterialPageRoute(
+                          builder: (_) => WatchHomeScreen(
+                            key: ValueKey(_isCircular),
+                            isCircular: _isCircular,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
