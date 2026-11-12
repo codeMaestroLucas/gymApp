@@ -119,7 +119,15 @@ class WatchWorkoutOverviewScreen extends StatelessWidget {
                             primaryMuscleGroup: ex.primaryMuscleGroup,
                             diagramType: ex.diagramType,
                           ) ??
-                          'source/imgs/exercicies/peito/0.png';
+                          'source/exercices/images/chest/Bench Press.png';
+
+                      final videoPath = ex.videoUrl ??
+                          ExerciseImageService.getVideoForExercise(
+                            exerciseName: ex.name,
+                            primaryMuscleGroup: ex.primaryMuscleGroup,
+                            diagramType: ex.diagramType,
+                          );
+                      final hasVideo = videoPath != null && videoPath.isNotEmpty;
 
                       return InkWell(
                         onTap: () {
@@ -191,6 +199,28 @@ class WatchWorkoutOverviewScreen extends StatelessWidget {
                                         ),
                                       ),
                                     ),
+                                    if (hasVideo)
+                                      Positioned(
+                                        bottom: 4,
+                                        right: 6,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryOrange,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.play_arrow_rounded, size: 9, color: Colors.white),
+                                              Text(
+                                                'VÍDEO',
+                                                style: TextStyle(fontSize: 6.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                     if (ex.observations.trim().isNotEmpty)
                                       Positioned(
                                         top: 4,
@@ -251,6 +281,28 @@ class WatchWorkoutOverviewScreen extends StatelessWidget {
                                         ),
                                       ],
                                     ),
+                                    if (hasVideo)
+                                      Positioned(
+                                        bottom: 4,
+                                        right: 6,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryOrange,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.play_arrow_rounded, size: 9, color: Colors.white),
+                                              Text(
+                                                'VÍDEO',
+                                                style: TextStyle(fontSize: 6.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                     if (ex.observations.trim().isNotEmpty) ...[
                                       const SizedBox(height: 3),
                                       Text(

@@ -5,6 +5,7 @@ import '../widgets/anatomical_diagram.dart';
 import '../widgets/rest_timer_sheet.dart';
 import '../theme/app_colors.dart';
 import 'active_workout_screen.dart';
+import 'exercise_detail_screen.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
   final Workout workout;
@@ -197,7 +198,11 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -215,17 +220,21 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                             ),
                           ),
                         ),
-                        const Spacer(),
-                        const Icon(Icons.timer_outlined,
-                            size: 16, color: AppColors.accentYellow),
-                        const SizedBox(width: 5),
-                        Text(
-                          '${_currentWorkout.durationMinutes} min estimados',
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.timer_outlined,
+                                size: 16, color: AppColors.accentYellow),
+                            const SizedBox(width: 5),
+                            Text(
+                              '${_currentWorkout.durationMinutes} min estimados',
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -244,17 +253,23 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildSummaryItem(
-                          label: 'Exercícios',
-                          value: '${_currentWorkout.exercises.length}',
+                        Expanded(
+                          child: _buildSummaryItem(
+                            label: 'Exercícios',
+                            value: '${_currentWorkout.exercises.length}',
+                          ),
                         ),
-                        _buildSummaryItem(
-                          label: 'Repetições Totais',
-                          value: '${_currentWorkout.totalSets}',
+                        Expanded(
+                          child: _buildSummaryItem(
+                            label: 'Repetições Totais',
+                            value: '${_currentWorkout.totalSets}',
+                          ),
                         ),
-                        _buildSummaryItem(
-                          label: 'Volume Estimado',
-                          value: '${(_currentWorkout.estimatedTotalVolumeKg / 1000).toStringAsFixed(1)}t',
+                        Expanded(
+                          child: _buildSummaryItem(
+                            label: 'Volume Estimado',
+                            value: '${(_currentWorkout.estimatedTotalVolumeKg / 1000).toStringAsFixed(1)}t',
+                          ),
                         ),
                       ],
                     ),
@@ -271,14 +286,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Exercícios e Anatomia',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
+                  const Expanded(
+                    child: Text(
+                      'Exercícios e Anatomia',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     '${_currentWorkout.exercises.length} itens',
                     style: const TextStyle(
@@ -432,7 +452,15 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               primaryMuscleGroup: ex.primaryMuscleGroup,
               targetMuscles: ex.targetMuscles,
               imageUrl: ex.imageUrl,
+              videoUrl: ex.videoUrl,
               height: 195,
+              onTap: () {
+                ExerciseDetailModal.show(
+                  context,
+                  exercise: ex,
+                  onExerciseUpdated: (updated) => _updateExercise(index, updated),
+                );
+              },
             ),
           ),
           const SizedBox(height: 14),
@@ -501,15 +529,19 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                       const Icon(Icons.edit_note_rounded,
                           size: 16, color: AppColors.primaryOrange),
                       const SizedBox(width: 6),
-                      const Text(
-                        'Observações pessoais:',
-                        style: TextStyle(
-                          color: AppColors.primaryOrange,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+                      const Expanded(
+                        child: Text(
+                          'Observações pessoais:',
+                          style: TextStyle(
+                            color: AppColors.primaryOrange,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       InkWell(
                         onTap: () => _editExerciseDetails(context, index),
                         child: const Text(

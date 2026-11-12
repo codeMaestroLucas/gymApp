@@ -47,11 +47,18 @@ class AiWorkoutService {
       exerciseVariety: exerciseVariety,
     );
 
-    // Vincula prioritariamente imagens da pasta source/imgs/exercicies
+    // Vincula prioritariamente imagens e vídeos da pasta source/exercices
     for (final w in synthesized) {
       for (final ex in w.exercises) {
         if (ex.imageUrl == null || ex.imageUrl!.isEmpty) {
           ex.imageUrl = ExerciseImageService.getImageForExercise(
+            exerciseName: ex.name,
+            primaryMuscleGroup: ex.primaryMuscleGroup,
+            diagramType: ex.diagramType,
+          );
+        }
+        if (ex.videoUrl == null || ex.videoUrl!.isEmpty) {
+          ex.videoUrl = ExerciseImageService.getVideoForExercise(
             exerciseName: ex.name,
             primaryMuscleGroup: ex.primaryMuscleGroup,
             diagramType: ex.diagramType,

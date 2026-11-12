@@ -25,6 +25,7 @@ class StorageService {
   Future<void> init() async {
     if (_initialized) return;
     _prefs = await SharedPreferences.getInstance();
+    await ExerciseImageService.init();
     _initialized = true;
   }
 
@@ -64,7 +65,7 @@ class StorageService {
         final List<dynamic> list = json.decode(str);
         final loaded = list.map((e) => Workout.fromMap(e as Map<String, dynamic>)).toList();
         // Garante que todas as repetições respeitem o limite de no máximo 3 reps
-        // e que as imagens da pasta source/imgs/exercicies sejam vinculadas prioritariamente
+        // e que as imagens e vídeos da pasta source/exercices sejam vinculados prioritariamente
         bool changed = false;
         for (final w in loaded) {
           for (final ex in w.exercises) {
@@ -72,13 +73,24 @@ class StorageService {
               ex.reps = 3;
               changed = true;
             }
-            if (ex.imageUrl == null || ex.imageUrl!.isEmpty) {
+            if (ex.imageUrl == null ||
+                ex.imageUrl!.isEmpty ||
+                ex.imageUrl!.contains('source/imgs/exercicies')) {
               ex.imageUrl = ExerciseImageService.getImageForExercise(
                 exerciseName: ex.name,
+                explicitImageUrl: ex.imageUrl,
                 primaryMuscleGroup: ex.primaryMuscleGroup,
                 diagramType: ex.diagramType,
               );
               changed = true;
+            }
+            if (ex.videoUrl == null || ex.videoUrl!.isEmpty) {
+              ex.videoUrl = ExerciseImageService.getVideoForExercise(
+                exerciseName: ex.name,
+                primaryMuscleGroup: ex.primaryMuscleGroup,
+                diagramType: ex.diagramType,
+              );
+              if (ex.videoUrl != null) changed = true;
             }
           }
         }
@@ -89,6 +101,20 @@ class StorageService {
       } catch (_) {}
     }
     final defaults = _getDefaultWorkouts();
+    for (final w in defaults) {
+      for (final ex in w.exercises) {
+        ex.imageUrl = ExerciseImageService.getImageForExercise(
+          exerciseName: ex.name,
+          primaryMuscleGroup: ex.primaryMuscleGroup,
+          diagramType: ex.diagramType,
+        );
+        ex.videoUrl = ExerciseImageService.getVideoForExercise(
+          exerciseName: ex.name,
+          primaryMuscleGroup: ex.primaryMuscleGroup,
+          diagramType: ex.diagramType,
+        );
+      }
+    }
     saveWorkouts(defaults);
     return defaults;
   }
@@ -119,6 +145,20 @@ class StorageService {
 
   Future<List<Workout>> resetWorkoutsToDefault() async {
     final defaults = _getDefaultWorkouts();
+    for (final w in defaults) {
+      for (final ex in w.exercises) {
+        ex.imageUrl = ExerciseImageService.getImageForExercise(
+          exerciseName: ex.name,
+          primaryMuscleGroup: ex.primaryMuscleGroup,
+          diagramType: ex.diagramType,
+        );
+        ex.videoUrl = ExerciseImageService.getVideoForExercise(
+          exerciseName: ex.name,
+          primaryMuscleGroup: ex.primaryMuscleGroup,
+          diagramType: ex.diagramType,
+        );
+      }
+    }
     await saveWorkouts(defaults);
     return defaults;
   }

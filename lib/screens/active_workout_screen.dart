@@ -4,6 +4,8 @@ import '../models/workout.dart';
 import '../models/workout_history.dart';
 import '../widgets/rest_timer_sheet.dart';
 import '../services/storage_service.dart';
+import '../services/exercise_image_service.dart';
+import 'exercise_detail_screen.dart';
 import '../theme/app_colors.dart';
 
 class ActiveWorkoutScreen extends StatefulWidget {
@@ -262,55 +264,107 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                     ),
                   ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    leading: Checkbox(
-                      value: isDone,
-                      activeColor: AppColors.primaryOrange,
-                      checkColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      onChanged: (val) {
-                        setState(() {
-                          _completedExercises[index] = val ?? false;
-                          if (val == true && index < widget.workout.exercises.length - 1) {
-                            _currentExerciseIndex = index + 1;
-                            // Abre automaticamente o timer de descanso entre séries/exercícios
-                            RestTimerSheet.show(
-                              context,
-                              initialSeconds: ex.restSeconds,
-                              exerciseName: ex.name,
-                            );
-                          }
-                        });
-                      },
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    leading: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          value: isDone,
+                          activeColor: AppColors.primaryOrange,
+                          checkColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          onChanged: (val) {
+                            setState(() {
+                              _completedExercises[index] = val ?? false;
+                              if (val == true && index < widget.workout.exercises.length - 1) {
+                                _currentExerciseIndex = index + 1;
+                                RestTimerSheet.show(
+                                  context,
+                                  initialSeconds: ex.restSeconds,
+                                  exerciseName: ex.name,
+                                );
+                              }
+                            });
+                          },
+                        ),
+                        // Miniatura da imagem oficial (ao clicar, abre vídeo e detalhes)
+                        GestureDetector(
+                          onTap: () {
+                            ExerciseDetailModal.show(context, exercise: ex);
+                          },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            margin: const EdgeInsets.only(right: 6),
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppColors.backgroundDark,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: ex.videoUrl != null
+                                    ? AppColors.primaryOrange.withValues(alpha: 0.7)
+                                    : AppColors.cardBorder,
+                                width: 1,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.asset(
+                              ex.imageUrl ??
+                                  ExerciseImageService.getImageForExercise(
+                                    exerciseName: ex.name,
+                                    primaryMuscleGroup: ex.primaryMuscleGroup,
+                                    diagramType: ex.diagramType,
+                                  ) ??
+                                  'source/exercices/images/chest/Bench Press.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => const Center(
+                                child: Icon(Icons.fitness_center_rounded, size: 18, color: AppColors.primaryOrange),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     title: Text(
                       ex.name,
                       style: TextStyle(
                         color: isDone ? AppColors.textSecondary : AppColors.textPrimary,
-                        fontSize: 15,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.bold,
                         decoration: isDone ? TextDecoration.lineThrough : null,
                       ),
                     ),
                     subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.only(top: 3),
                       child: Text(
                         '${ex.reps} reps • ${ex.weightKg.toStringAsFixed(ex.weightKg % 1 == 0 ? 0 : 1)} kg',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 12.5,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.timer_outlined, color: AppColors.accentYellow),
-                      onPressed: () {
-                        RestTimerSheet.show(
-                          context,
-                          initialSeconds: ex.restSeconds,
-                          exerciseName: ex.name,
-                        );
-                      },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.play_circle_fill_rounded, color: AppColors.primaryOrange, size: 22),
+                          tooltip: 'Ver vídeo de execução',
+                          onPressed: () {
+                            ExerciseDetailModal.show(context, exercise: ex);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.timer_outlined, color: AppColors.accentYellow, size: 20),
+                          onPressed: () {
+                            RestTimerSheet.show(
+                              context,
+                              initialSeconds: ex.restSeconds,
+                              exerciseName: ex.name,
+                            );
+                          },
+                        ),
+                      ],
                     ),
                     onTap: () {
                       setState(() => _currentExerciseIndex = index);

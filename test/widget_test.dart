@@ -13,6 +13,7 @@ import 'package:gym_app/widgets/workout_card.dart';
 import 'package:gym_app/watch/watch_companion_screen.dart';
 import 'package:gym_app/watch/screens/watch_home_screen.dart';
 import 'package:gym_app/watch/screens/watch_active_workout_screen.dart';
+import 'package:gym_app/screens/workout_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -26,7 +27,8 @@ void main() {
     await StorageService().init();
     await WatchSyncService.instance.init();
     await tester.pumpWidget(const GymApp());
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Início'), findsOneWidget);
     expect(find.text('Evolução'), findsOneWidget);
@@ -38,11 +40,13 @@ void main() {
     expect(find.byType(Dismissible), findsWidgets);
 
     await tester.tap(find.text('Evolução'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Evolução & Performance'), findsOneWidget);
 
     await tester.tap(find.text('Perfil'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.textContaining('Índice de Massa Corporal'), findsOneWidget);
   });
 
@@ -58,7 +62,8 @@ void main() {
     await WatchSyncService.instance.init();
 
     await tester.pumpWidget(const GymApp());
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Deve abrir APENAS a tela de início do Smartwatch com os treinos gerados
     expect(find.byType(WatchHomeScreen), findsOneWidget);
@@ -89,7 +94,8 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.textContaining('TREINO'), findsOneWidget);
     expect(find.text('Iniciar'), findsOneWidget);
@@ -190,32 +196,53 @@ void main() {
         expect(ex.reps, greaterThanOrEqualTo(1));
         expect(ex.weightKg, greaterThan(0));
         expect(ex.imageUrl, isNotNull);
-        expect(ex.imageUrl, startsWith('source/imgs/exercicies/'));
+        expect(ex.imageUrl, startsWith('source/exercices/images/'));
       }
     }
   });
 
-  test('ExerciseImageService resolves images from source/imgs/exercicies', () {
-    final bench = ExerciseImageService.getImageForExercise(
+  test('ExerciseImageService resolves images and videos from source/exercices', () {
+    final benchImg = ExerciseImageService.getImageForExercise(
       exerciseName: 'Supino Reto com Barra',
       primaryMuscleGroup: 'chest',
       diagramType: 'bench_press',
     );
-    expect(bench, equals('source/imgs/exercicies/chest/Bench Press.png'));
+    expect(benchImg, equals('source/exercices/images/chest/Bench Press.png'));
 
-    final squat = ExerciseImageService.getImageForExercise(
+    final benchVid = ExerciseImageService.getVideoForExercise(
+      exerciseName: 'Supino Reto com Barra',
+      primaryMuscleGroup: 'chest',
+      diagramType: 'bench_press',
+    );
+    expect(benchVid, equals('source/exercices/videos/chest/Bench Press.mp4'));
+
+    final squatImg = ExerciseImageService.getImageForExercise(
       exerciseName: 'Agachamento Livre',
       primaryMuscleGroup: 'quadriceps',
       diagramType: 'squat',
     );
-    expect(squat, equals('source/imgs/exercicies/chest/Full Squat.png'));
+    expect(squatImg, equals('source/exercices/images/chest/Full Squat.png'));
 
-    final deadlift = ExerciseImageService.getImageForExercise(
+    final squatVid = ExerciseImageService.getVideoForExercise(
+      exerciseName: 'Agachamento Livre',
+      primaryMuscleGroup: 'quadriceps',
+      diagramType: 'squat',
+    );
+    expect(squatVid, equals('source/exercices/videos/quadriceps/Full Squat.mp4'));
+
+    final deadliftImg = ExerciseImageService.getImageForExercise(
       exerciseName: 'Levantamento Terra',
       primaryMuscleGroup: 'back',
       diagramType: 'deadlift',
     );
-    expect(deadlift, equals('source/imgs/exercicies/back/Barbell Deadlift front view.png'));
+    expect(deadliftImg, equals('source/exercices/images/back/Barbell Deadlift front view.png'));
+
+    final deadliftVid = ExerciseImageService.getVideoForExercise(
+      exerciseName: 'Levantamento Terra',
+      primaryMuscleGroup: 'back',
+      diagramType: 'deadlift',
+    );
+    expect(deadliftVid, equals('source/exercices/videos/hips/Barbell Deadlift.mp4'));
   });
 
   test('WatchSyncService updates reactively when workouts are modified in StorageService', () async {
@@ -268,7 +295,8 @@ void main() {
         home: WatchHomeScreen(isCircular: true),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('SEUS TREINOS'), findsOneWidget);
 
@@ -278,7 +306,8 @@ void main() {
         home: WatchCompanionScreen(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Port Smartwatch (Wearable)'), findsOneWidget);
     expect(find.text('Sincronização Ativa em Tempo Real'), findsOneWidget);
@@ -378,5 +407,65 @@ void main() {
 
     // Deve avançar automaticamente para o próximo exercício pendente (ex_1)
     expect(find.text('EX 1/3'), findsOneWidget);
+  });
+
+  testWidgets('Tapping on exercise image in WorkoutDetailScreen opens ExerciseDetailModal with video and details',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(400, 850);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final testExercise = Exercise(
+      id: 'ex_detail_1',
+      name: 'Supino Reto com Barra',
+      targetMuscles: ['Peitoral Maior', 'Tríceps'],
+      primaryMuscleGroup: 'chest',
+      weightKg: 95.0,
+      reps: 3,
+      sets: 3,
+      restSeconds: 120,
+      diagramType: 'bench_press',
+      imageUrl: 'source/exercices/images/chest/Bench Press.png',
+      videoUrl: 'source/exercices/videos/chest/Bench Press.mp4',
+      observations: 'Manter escápulas aduzidas',
+    );
+
+    final testWorkout = Workout(
+      id: 'w_detail_test',
+      title: 'Treino Teste Detalhe',
+      splitTag: 'A',
+      targetMusclesSummary: 'Peito e Braços',
+      durationMinutes: 45,
+      daysOfWeek: ['Segunda'],
+      exercises: [testExercise],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkoutDetailScreen(
+          workout: testWorkout,
+          onWorkoutUpdated: (_) {},
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // 1. Verifica se a imagem do exercício é exibida na tela de exercícios do treino
+    expect(find.text('Supino Reto com Barra'), findsOneWidget);
+    expect(find.byType(Image), findsWidgets);
+
+    // 2. Clica na imagem do exercício específico
+    final imageWidget = find.byType(Image).first;
+    await tester.tap(imageWidget);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // 3. Verifica se o modal detalhado abriu com os detalhes e aba de vídeo de execução
+    expect(find.text('Vídeo da Execução'), findsOneWidget);
+    expect(find.text('Foto Anatômica'), findsOneWidget);
+    expect(find.text('MÚSCULOS ALVO'), findsOneWidget);
+    expect(find.text('OBSERVAÇÕES E NOTAS TÉCNICAS'), findsOneWidget);
+    expect(find.textContaining('Manter escápulas aduzidas'), findsWidgets);
   });
 }

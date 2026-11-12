@@ -1,9 +1,11 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/exercise_image_service.dart';
 import '../theme/app_colors.dart';
 
 /// Diagrama anatômico e visualizador de execução de exercícios com pesos.
-/// Exibe prioritariamente a imagem real da pasta source/imgs/exercicies,
+/// Exibe prioritariamente a imagem real da pasta source/exercices/images,
 /// com opções para alternar entre Biomecânica e Anatomia Muscular.
 class AnatomicalDiagram extends StatefulWidget {
   final String diagramType;
@@ -11,8 +13,10 @@ class AnatomicalDiagram extends StatefulWidget {
   final String primaryMuscleGroup;
   final List<String> targetMuscles;
   final String? imageUrl;
+  final String? videoUrl;
   final double height;
   final bool showExecutionCues;
+  final VoidCallback? onTap;
 
   const AnatomicalDiagram({
     super.key,
@@ -21,8 +25,10 @@ class AnatomicalDiagram extends StatefulWidget {
     required this.primaryMuscleGroup,
     required this.targetMuscles,
     this.imageUrl,
+    this.videoUrl,
     this.height = 195,
     this.showExecutionCues = true,
+    this.onTap,
   });
 
   @override
@@ -34,6 +40,7 @@ class _AnatomicalDiagramState extends State<AnatomicalDiagram>
   late AnimationController _animController;
   int _activeViewIndex = 0; // 0: Imagem do Exercício, 1: Postura/Biomecânica, 2: Anatomia Muscular
   String? _resolvedImagePath;
+  String? _resolvedVideoPath;
 
   @override
   void initState() {
@@ -41,7 +48,10 @@ class _AnatomicalDiagramState extends State<AnatomicalDiagram>
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
+    );
+    if (kIsWeb || !Platform.environment.containsKey('FLUTTER_TEST')) {
+      _animController.repeat(reverse: true);
+    }
 
     _resolvedImagePath = ExerciseImageService.getImageForExercise(
       exerciseName: widget.exerciseName,
@@ -49,19 +59,33 @@ class _AnatomicalDiagramState extends State<AnatomicalDiagram>
       primaryMuscleGroup: widget.primaryMuscleGroup,
       diagramType: widget.diagramType,
     );
+
+    _resolvedVideoPath = widget.videoUrl ??
+        ExerciseImageService.getVideoForExercise(
+          exerciseName: widget.exerciseName,
+          primaryMuscleGroup: widget.primaryMuscleGroup,
+          diagramType: widget.diagramType,
+        );
   }
 
   @override
   void didUpdateWidget(covariant AnatomicalDiagram oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.exerciseName != widget.exerciseName ||
-        oldWidget.imageUrl != widget.imageUrl) {
+        oldWidget.imageUrl != widget.imageUrl ||
+        oldWidget.videoUrl != widget.videoUrl) {
       _resolvedImagePath = ExerciseImageService.getImageForExercise(
         exerciseName: widget.exerciseName,
         explicitImageUrl: widget.imageUrl,
         primaryMuscleGroup: widget.primaryMuscleGroup,
         diagramType: widget.diagramType,
       );
+      _resolvedVideoPath = widget.videoUrl ??
+          ExerciseImageService.getVideoForExercise(
+            exerciseName: widget.exerciseName,
+            primaryMuscleGroup: widget.primaryMuscleGroup,
+            diagramType: widget.diagramType,
+          );
     }
   }
 
@@ -233,21 +257,66 @@ class _AnatomicalDiagramState extends State<AnatomicalDiagram>
   }
 
   Widget _buildAssetImageView() {
-    return Container(
-      padding: const EdgeInsets.only(top: 24, bottom: 26, left: 14, right: 14),
-      alignment: Alignment.center,
-      child: Image.asset(
-        _resolvedImagePath!,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          // Se falhar o carregamento do arquivo, renderiza o diagrama vetorial
-          return CustomPaint(
-            painter: _ExerciseExecutionPainter(
-              diagramType: widget.diagramType,
-              phaseProgress: _animController.value,
+    final hasVideo = _resolvedVideoPath != null && _resolvedVideoPath!.isNotEmpty;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(
+            padding: const EdgeInsets.only(top: 24, bottom: 26, left: 14, right: 14),
+            alignment: Alignment.center,
+            child: Image.asset(
+              _resolvedImagePath!,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // Se falhar o carregamento do arquivo, renderiza o diagrama vetorial
+                return CustomPaint(
+                  painter: _ExerciseExecutionPainter(
+                    diagramType: widget.diagramType,
+                    phaseProgress: _animController.value,
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          // Badge indicativo de clique para ver vídeo/detalhes
+          Positioned(
+            top: 8,
+            left: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: hasVideo ? AppColors.primaryOrange : AppColors.cardBorder,
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    hasVideo ? Icons.play_circle_fill_rounded : Icons.zoom_in_rounded,
+                    size: 11,
+                    color: hasVideo ? AppColors.primaryOrange : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    hasVideo ? 'VÍDEO DE EXECUÇÃO' : 'VER DETALHES',
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: hasVideo ? Colors.white : AppColors.textSecondary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

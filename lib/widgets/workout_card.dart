@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/workout.dart';
+import '../services/exercise_image_service.dart';
+import '../screens/exercise_detail_screen.dart';
 import '../theme/app_colors.dart';
 
 class WorkoutCard extends StatelessWidget {
@@ -137,6 +139,60 @@ class WorkoutCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                // Miniaturas dos Exercícios do Treino (clique em qualquer uma para ver vídeo e detalhes)
+                if (workout.exercises.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 48,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: workout.exercises.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 8),
+                      itemBuilder: (context, idx) {
+                        final ex = workout.exercises[idx];
+                        final img = ex.imageUrl ??
+                            ExerciseImageService.getImageForExercise(
+                              exerciseName: ex.name,
+                              primaryMuscleGroup: ex.primaryMuscleGroup,
+                              diagramType: ex.diagramType,
+                            ) ??
+                            'source/exercices/images/chest/Bench Press.png';
+
+                        return InkWell(
+                          onTap: () {
+                            ExerciseDetailModal.show(context, exercise: ex);
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: AppColors.backgroundDark,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: ex.videoUrl != null
+                                    ? AppColors.primaryOrange.withValues(alpha: 0.6)
+                                    : AppColors.cardBorder,
+                                width: 1,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.asset(
+                              img,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => const Center(
+                                child: Icon(Icons.fitness_center_rounded, size: 18, color: AppColors.primaryOrange),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 12),
 
                 // Divider sutil

@@ -472,7 +472,7 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
           primaryMuscleGroup: ex.primaryMuscleGroup,
           diagramType: ex.diagramType,
         ) ??
-        'source/imgs/exercicies/peito/0.png';
+        'source/exercices/images/chest/Bench Press.png';
 
     final isCompleted = _completedExerciseIndices.contains(index);
 
@@ -853,7 +853,7 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
                         primaryMuscleGroup: ex.primaryMuscleGroup,
                         diagramType: ex.diagramType,
                       ) ??
-                      'source/imgs/exercicies/peito/0.png';
+                      'source/exercices/images/chest/Bench Press.png';
 
                   return InkWell(
                     onTap: () {

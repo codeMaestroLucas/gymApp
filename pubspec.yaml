@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.6
   http: ^1.6.0
+  video_player: ^2.14.1
 
 dev_dependencies:
   flutter_test:
@@ -60,20 +61,35 @@ flutter:
   uses-material-design: true
 
   assets:
-    - source/imgs/exercicies/back/
-    - source/imgs/exercicies/biceps/
-    - source/imgs/exercicies/calves/
-    - source/imgs/exercicies/cardio/
-    - source/imgs/exercicies/chest/
-    - source/imgs/exercicies/forearms/
-    - source/imgs/exercicies/hamstrings/
-    - source/imgs/exercicies/hips/
-    - source/imgs/exercicies/neck/
-    - source/imgs/exercicies/quadriceps/
-    - source/imgs/exercicies/shoulders/
-    - source/imgs/exercicies/triceps/
-    - source/imgs/exercicies/upperArms/
-    - source/imgs/exercicies/waist/
+    - source/exercices/images/back/
+    - source/exercices/images/biceps/
+    - source/exercices/images/calves/
+    - source/exercices/images/cardio/
+    - source/exercices/images/chest/
+    - source/exercices/images/forearms/
+    - source/exercices/images/hamstrings/
+    - source/exercices/images/hips/
+    - source/exercices/images/neck/
+    - source/exercices/images/quadriceps/
+    - source/exercices/images/shoulders/
+    - source/exercices/images/triceps/
+    - source/exercices/images/upperArms/
+    - source/exercices/images/waist/
+    - source/exercices/videos/back/
+    - source/exercices/videos/biceps/
+    - source/exercices/videos/calves/
+    - source/exercices/videos/cardio/
+    - source/exercices/videos/chest/
+    - source/exercices/videos/forearms/
+    - source/exercices/videos/hamstrings/
+    - source/exercices/videos/hips/
+    - source/exercices/videos/neck/
+    - source/exercices/videos/quadriceps/
+    - source/exercices/videos/shoulders/
+    - source/exercices/videos/triceps/
+    - source/exercices/videos/upperArms/
+    - source/exercices/videos/waist/
+    - source/exercices/exercicios.json
     - assets/data/exercicios.json
 
   # An image asset can refer to one or more resolution-specific "variants", see

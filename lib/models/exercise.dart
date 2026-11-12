@@ -13,6 +13,7 @@ class Exercise {
   final String diagramType;
   final List<String> executionTips;
   String? imageUrl;
+  String? videoUrl;
   bool isCompleted;
 
   Exercise({
@@ -28,6 +29,7 @@ class Exercise {
     required this.diagramType,
     this.executionTips = const [],
     this.imageUrl,
+    this.videoUrl,
     this.isCompleted = false,
   });
 
@@ -44,6 +46,7 @@ class Exercise {
     String? diagramType,
     List<String>? executionTips,
     String? imageUrl,
+    String? videoUrl,
     bool? isCompleted,
   }) {
     return Exercise(
@@ -59,6 +62,7 @@ class Exercise {
       diagramType: diagramType ?? this.diagramType,
       executionTips: executionTips ?? this.executionTips,
       imageUrl: imageUrl ?? this.imageUrl,
+      videoUrl: videoUrl ?? this.videoUrl,
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }
@@ -77,24 +81,34 @@ class Exercise {
       'diagramType': diagramType,
       'executionTips': executionTips,
       'imageUrl': imageUrl,
+      'videoUrl': videoUrl,
       'isCompleted': isCompleted,
     };
   }
 
   factory Exercise.fromMap(Map<String, dynamic> map) {
+    // Migra caminhos antigos de imagens automaticamente para a nova estrutura source/exercices/images
+    String? resolvedImg = (map['imageUrl'] ?? map['caminho_imagem']) as String?;
+    if (resolvedImg != null && resolvedImg.contains('source/imgs/exercicies')) {
+      resolvedImg = resolvedImg.replaceAll('source/imgs/exercicies', 'source/exercices/images');
+    }
+
+    String? resolvedVid = (map['videoUrl'] ?? map['caminho_video']) as String?;
+
     return Exercise(
       id: map['id'] ?? '',
-      name: map['name'] ?? '',
+      name: map['name'] ?? map['nome'] ?? '',
       targetMuscles: List<String>.from(map['targetMuscles'] ?? []),
       primaryMuscleGroup: map['primaryMuscleGroup'] ?? 'chest',
       weightKg: (map['weightKg'] as num?)?.toDouble() ?? 20.0,
-      reps: (map['reps'] as num?)?.toInt() ?? 10,
+      reps: (map['reps'] as num?)?.toInt() ?? 3,
       sets: (map['sets'] as num?)?.toInt() ?? 3,
       restSeconds: (map['restSeconds'] as num?)?.toInt() ?? 60,
       observations: map['observations'] ?? '',
       diagramType: map['diagramType'] ?? 'bench_press',
       executionTips: List<String>.from(map['executionTips'] ?? []),
-      imageUrl: map['imageUrl'],
+      imageUrl: resolvedImg,
+      videoUrl: resolvedVid,
       isCompleted: map['isCompleted'] ?? false,
     );
   }

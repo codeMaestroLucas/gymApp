@@ -7,6 +7,7 @@ import '../theme/app_colors.dart';
 import 'create_workout_modal.dart';
 import 'workout_detail_screen.dart';
 import 'active_workout_screen.dart';
+import 'exercise_catalog_sheet.dart';
 import '../watch/watch_companion_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -292,23 +293,48 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // Título da Seção de Treinos
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Título da Seção de Treinos e Botão de Exercícios (com Wrap para proteção contra overflow em telas estreitas)
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
-                        const Expanded(
-                          child: Text(
-                            'Meus Treinos Ativos',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        const Text(
+                          'Meus Treinos Ativos',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => ExerciseCatalogSheet.show(context),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.cardBackground,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.5)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.photo_library_outlined, size: 12, color: AppColors.primaryOrange),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Exercícios',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.primaryOrange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

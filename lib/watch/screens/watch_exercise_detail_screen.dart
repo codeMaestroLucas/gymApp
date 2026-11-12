@@ -3,11 +3,12 @@ import '../../models/exercise.dart';
 import '../../theme/app_colors.dart';
 import '../../services/exercise_image_service.dart';
 import '../widgets/watch_screen_container.dart';
+import '../../widgets/exercise_video_player.dart';
 
-/// Tela de visualização detalhada do exercício no Smartwatch
-/// Exibe a imagem anatômica/técnica oficial do exercício, carga, repetições,
-/// tempo de descanso e todas as observações registradas no celular.
-class WatchExerciseDetailScreen extends StatelessWidget {
+/// Tela de visualização detalhada do exercício no Smartwatch (Wear OS / watchOS).
+/// Permite alternar entre imagem anatômica e vídeo da execução (caso exista),
+/// além de verificar cargas, repetições, descanso e observações do atleta.
+class WatchExerciseDetailScreen extends StatefulWidget {
   final Exercise exercise;
   final bool isCircular;
 
@@ -18,19 +19,35 @@ class WatchExerciseDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<WatchExerciseDetailScreen> createState() => _WatchExerciseDetailScreenState();
+}
+
+class _WatchExerciseDetailScreenState extends State<WatchExerciseDetailScreen> {
+  int _mediaMode = 0; // 0: Imagem, 1: Vídeo
+
+  @override
   Widget build(BuildContext context) {
-    final imagePath = exercise.imageUrl ??
+    final imagePath = widget.exercise.imageUrl ??
         ExerciseImageService.getImageForExercise(
-          exerciseName: exercise.name,
-          primaryMuscleGroup: exercise.primaryMuscleGroup,
-          diagramType: exercise.diagramType,
+          exerciseName: widget.exercise.name,
+          primaryMuscleGroup: widget.exercise.primaryMuscleGroup,
+          diagramType: widget.exercise.diagramType,
         ) ??
-        'source/imgs/exercicies/peito/0.png';
+        'source/exercices/images/chest/Bench Press.png';
+
+    final videoPath = widget.exercise.videoUrl ??
+        ExerciseImageService.getVideoForExercise(
+          exerciseName: widget.exercise.name,
+          primaryMuscleGroup: widget.exercise.primaryMuscleGroup,
+          diagramType: widget.exercise.diagramType,
+        );
+
+    final hasVideo = videoPath != null && videoPath.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: WatchScreenContainer(
-        isCircular: isCircular,
+        isCircular: widget.isCircular,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
@@ -70,40 +87,72 @@ class WatchExerciseDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 6),
 
-              // Imagem Oficial do Exercício Ampliada (source/imgs/exercicies)
-              Container(
-                height: 125,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundDark,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.6), width: 1.5),
+              // Botões de alternância Foto vs Vídeo (caso o exercício tenha vídeo)
+              if (hasVideo) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildModeButton(
+                      label: 'FOTO',
+                      icon: Icons.image_rounded,
+                      isSelected: _mediaMode == 0,
+                      onTap: () => setState(() => _mediaMode = 0),
+                    ),
+                    const SizedBox(width: 6),
+                    _buildModeButton(
+                      label: 'VÍDEO',
+                      icon: Icons.play_circle_fill_rounded,
+                      isSelected: _mediaMode == 1,
+                      onTap: () => setState(() => _mediaMode = 1),
+                    ),
+                  ],
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: Image.asset(
-                      imagePath,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: AppColors.cardBackground,
-                          child: const Center(
-                            child: Icon(Icons.fitness_center_rounded, color: AppColors.primaryOrange, size: 36),
-                          ),
-                        );
-                      },
+                const SizedBox(height: 6),
+              ],
+
+              // Mídia Principal (Vídeo ou Foto)
+              if (hasVideo && _mediaMode == 1)
+                ExerciseVideoPlayer(
+                  videoPath: videoPath,
+                  thumbnailPath: imagePath,
+                  height: 118,
+                  autoPlay: true,
+                  looping: true,
+                )
+              else
+                Container(
+                  height: 118,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundDark,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.6), width: 1.5),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset(
+                        imagePath,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: AppColors.cardBackground,
+                            child: const Center(
+                              child: Icon(Icons.fitness_center_rounded, color: AppColors.primaryOrange, size: 36),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
 
               const SizedBox(height: 8),
 
               // Nome do Exercício
               Text(
-                exercise.name,
+                widget.exercise.name,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.textPrimary,
@@ -124,7 +173,7 @@ class WatchExerciseDetailScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  exercise.primaryMuscleGroup.toUpperCase(),
+                  widget.exercise.primaryMuscleGroup.toUpperCase(),
                   style: const TextStyle(
                     color: AppColors.primaryOrange,
                     fontSize: 9,
@@ -136,14 +185,14 @@ class WatchExerciseDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // Grid de Métricas (Carga e Repetições - máx 3)
+              // Grid de Métricas (Carga e Repetições)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
                     child: _buildMetricPill(
                       label: 'CARGA',
-                      value: '${exercise.weightKg.toStringAsFixed(exercise.weightKg % 1 == 0 ? 0 : 1)} kg',
+                      value: '${widget.exercise.weightKg.toStringAsFixed(widget.exercise.weightKg % 1 == 0 ? 0 : 1)} kg',
                       color: AppColors.primaryOrange,
                     ),
                   ),
@@ -151,7 +200,7 @@ class WatchExerciseDetailScreen extends StatelessWidget {
                   Expanded(
                     child: _buildMetricPill(
                       label: 'REPETIÇÕES',
-                      value: '${exercise.reps} reps',
+                      value: '${widget.exercise.reps} reps',
                       color: AppColors.accentYellow,
                     ),
                   ),
@@ -174,7 +223,7 @@ class WatchExerciseDetailScreen extends StatelessWidget {
                     const Icon(Icons.timer_outlined, size: 13, color: AppColors.textSecondary),
                     const SizedBox(width: 5),
                     Text(
-                      'Descanso: ${exercise.restSeconds}s',
+                      'Descanso: ${widget.exercise.restSeconds}s',
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
@@ -185,43 +234,34 @@ class WatchExerciseDetailScreen extends StatelessWidget {
                 ),
               ),
 
-              // Observações do usuário / postura técnica (se houver)
-              if (exercise.observations.trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
+              // Observações se existirem
+              if (widget.exercise.observations.isNotEmpty) ...[
+                const SizedBox(height: 8),
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.primaryOrange.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.cardBorder),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.notes_rounded, size: 12, color: AppColors.primaryOrange),
-                          SizedBox(width: 4),
-                          Text(
-                            'Observações:',
-                            style: TextStyle(
-                              color: AppColors.primaryOrange,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                      const Text(
+                        'OBSERVAÇÃO',
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryOrange,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
-                        exercise.observations,
+                        widget.exercise.observations,
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 10,
+                          fontSize: 10.5,
+                          color: Colors.white,
                           height: 1.3,
                         ),
                       ),
@@ -238,13 +278,51 @@ class WatchExerciseDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildModeButton({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryOrange : AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryOrange : AppColors.cardBorder,
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 10, color: isSelected ? Colors.white : AppColors.textSecondary),
+            const SizedBox(width: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 8.5,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMetricPill({
     required String label,
     required String value,
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(10),
@@ -256,8 +334,9 @@ class WatchExerciseDetailScreen extends StatelessWidget {
             label,
             style: const TextStyle(
               fontSize: 8,
-              color: AppColors.textSecondary,
               fontWeight: FontWeight.bold,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.5,
             ),
           ),
           const SizedBox(height: 2),
@@ -265,7 +344,7 @@ class WatchExerciseDetailScreen extends StatelessWidget {
             value,
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
               color: color,
             ),
           ),
