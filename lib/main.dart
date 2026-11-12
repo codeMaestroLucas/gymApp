@@ -113,12 +113,40 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _userProfile = StorageService().loadProfile();
     _workouts = StorageService().loadWorkouts();
     WatchSyncService.instance.workoutsNotifier.addListener(_onWatchWorkoutsSync);
+    WatchSyncService.instance.lastCompletedWatchWorkout.addListener(_onWatchWorkoutCompletedAlert);
   }
 
   @override
   void dispose() {
     WatchSyncService.instance.workoutsNotifier.removeListener(_onWatchWorkoutsSync);
+    WatchSyncService.instance.lastCompletedWatchWorkout.removeListener(_onWatchWorkoutCompletedAlert);
     super.dispose();
+  }
+
+  void _onWatchWorkoutCompletedAlert() {
+    final entry = WatchSyncService.instance.lastCompletedWatchWorkout.value;
+    if (entry != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF1E1A1A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Row(
+            children: [
+              const Icon(Icons.watch_rounded, color: AppColors.primaryOrange, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '⌚ Treino "${entry.workoutTitle}" finalizado no relógio e sincronizado!',
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   void _onWatchWorkoutsSync() {

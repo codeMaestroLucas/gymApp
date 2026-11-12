@@ -13,6 +13,7 @@ class StorageService {
   static const String _keyHistory = 'workout_history';
   static const String _keyPRs = 'personal_records';
   static const String _keyGeminiApiKey = 'gemini_api_key';
+  static const String _keyPendingWatchFinishes = 'pending_watch_finishes_queue';
 
   // Singleton
   static final StorageService _instance = StorageService._internal();
@@ -127,6 +128,12 @@ class StorageService {
     await WatchSyncService.instance.syncWorkouts(workouts);
   }
 
+  /// Salva treinos apenas localmente no cache sem disparar loop reverso de sincronização
+  Future<void> saveWorkoutsLocally(List<Workout> workouts) async {
+    final jsonList = workouts.map((w) => w.toMap()).toList();
+    await _prefs.setString(_keyWorkouts, json.encode(jsonList));
+  }
+
   Future<void> updateWorkout(Workout updated) async {
     final list = loadWorkouts();
     final index = list.indexWhere((w) => w.id == updated.id);
@@ -142,6 +149,28 @@ class StorageService {
     final current = loadHistory();
     current.insert(0, entry);
     await saveHistory(current);
+  }
+
+  // --- Fila de Sincronização Offline do Smartwatch ---
+  List<Map<String, dynamic>> loadPendingWatchFinishes() {
+    final str = _prefs.getString(_keyPendingWatchFinishes);
+    if (str != null && str.isNotEmpty) {
+      try {
+        final List<dynamic> list = json.decode(str);
+        return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      } catch (_) {}
+    }
+    return [];
+  }
+
+  Future<void> addPendingWatchFinish(Map<String, dynamic> payload) async {
+    final list = loadPendingWatchFinishes();
+    list.add(payload);
+    await _prefs.setString(_keyPendingWatchFinishes, json.encode(list));
+  }
+
+  Future<void> clearPendingWatchFinishes() async {
+    await _prefs.remove(_keyPendingWatchFinishes);
   }
 
   Future<List<Workout>> resetWorkoutsToDefault() async {

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gym_app/main.dart';
 import 'package:gym_app/models/user_profile.dart';
 import 'package:gym_app/models/workout.dart';
+import 'package:gym_app/models/workout_history.dart';
 import 'package:gym_app/models/exercise.dart';
 import 'package:gym_app/services/ai_workout_service.dart';
 import 'package:gym_app/services/exercise_image_service.dart';
@@ -278,6 +279,63 @@ void main() {
     expect(WatchSyncService.instance.workoutsNotifier.value.length, equals(1));
     expect(WatchSyncService.instance.workoutsNotifier.value.first.id, equals('watch_test_1'));
     expect(WatchSyncService.instance.workoutsNotifier.value.first.exercises.first.reps, equals(3));
+  });
+
+  test('WatchSyncService handles incoming Wearable Data Layer messages and offline queue', () async {
+    SharedPreferences.setMockInitialValues({});
+    await StorageService().init();
+    await WatchSyncService.instance.init();
+
+    final service = WatchSyncService.instance;
+    await service.syncWorkouts([
+      Workout(
+        id: 'phone_synced_w1',
+        title: 'Treino Sincronizado Wear OS',
+        splitTag: 'B',
+        targetMusclesSummary: 'Costas e Bíceps',
+        durationMinutes: 50,
+        daysOfWeek: ['Terça'],
+        exercises: [
+          Exercise(
+            id: 'ex_synced_1',
+            name: 'Puxada Alta',
+            targetMuscles: ['Dorsal'],
+            primaryMuscleGroup: 'back',
+            weightKg: 75.0,
+            reps: 3,
+            sets: 3,
+            restSeconds: 90,
+            diagramType: 'lat_pulldown',
+          ),
+        ],
+      ),
+    ]);
+
+    expect(service.workoutsNotifier.value.length, equals(1));
+    expect(service.workoutsNotifier.value.first.title, equals('Treino Sincronizado Wear OS'));
+
+    // 2. Testa persistência de fila offline
+    await StorageService().clearPendingWatchFinishes();
+    final pendingItem = {
+      'action': 'WORKOUT_FINISHED_FROM_WATCH',
+      'updated_workout': service.workoutsNotifier.value.first.toMap(),
+      'history_entry': WorkoutHistoryEntry(
+        id: 'offline_h1',
+        workoutTitle: 'Treino Sincronizado Wear OS',
+        splitTag: 'B',
+        completedAt: DateTime.now(),
+        durationMinutes: 40,
+        totalVolumeKg: 1200.0,
+        totalSets: 3,
+        exercisesCount: 1,
+      ).toMap(),
+    };
+
+    await StorageService().addPendingWatchFinish(pendingItem);
+    expect(StorageService().loadPendingWatchFinishes().length, equals(1));
+
+    await service.flushPendingFinishes();
+    expect(StorageService().loadPendingWatchFinishes().length, equals(0));
   });
 
   testWidgets('WatchHomeScreen and WatchCompanionScreen render without overflow',
