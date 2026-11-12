@@ -64,13 +64,14 @@ class StorageService {
       try {
         final List<dynamic> list = json.decode(str);
         final loaded = list.map((e) => Workout.fromMap(e as Map<String, dynamic>)).toList();
-        // Garante que todas as repetições respeitem o limite de no máximo 3 reps
-        // e que as imagens e vídeos da pasta source/exercices sejam vinculados prioritariamente
+        // Garante sincronização entre reps e sets e vínculo prioritário
+        // de imagens e vídeos da pasta source/exercices
         bool changed = false;
         for (final w in loaded) {
           for (final ex in w.exercises) {
-            if (ex.reps > 3) {
-              ex.reps = 3;
+            // Mantém reps e sets sempre em sincronia
+            if (ex.sets != ex.reps) {
+              ex.sets = ex.reps;
               changed = true;
             }
             if (ex.imageUrl == null ||
@@ -223,7 +224,7 @@ class StorageService {
             primaryMuscleGroup: 'chest',
             weightKg: 95.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 120,
             observations: 'Descer controlando e explodir na subida mantendo escápulas travadas.',
             diagramType: 'bench_press',
@@ -239,7 +240,7 @@ class StorageService {
             primaryMuscleGroup: 'shoulders',
             weightKg: 62.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 120,
             observations: 'Travar o abdômen e glúteos para proteção lombar total.',
             diagramType: 'shoulder_press',
@@ -255,7 +256,7 @@ class StorageService {
             primaryMuscleGroup: 'chest',
             weightKg: 36.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 100,
             observations: 'Banco regulado a 30 graus para pico de tensão no peitoral superior.',
             diagramType: 'bench_press',
@@ -287,7 +288,7 @@ class StorageService {
             primaryMuscleGroup: 'shoulders',
             weightKg: 18.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 90,
             observations: 'Subida firme no plano escapular, descida em 3 segundos.',
             diagramType: 'lateral_raise',
@@ -349,7 +350,7 @@ class StorageService {
             primaryMuscleGroup: 'back',
             weightKg: 155.0,
             reps: 2,
-            sets: 4,
+            sets: 2,
             restSeconds: 150,
             observations: 'Barra colada nas canelas. Puxar empurrando o chão com calcanhares.',
             diagramType: 'deadlift',
@@ -365,7 +366,7 @@ class StorageService {
             primaryMuscleGroup: 'back',
             weightKg: 85.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 100,
             observations: 'Puxar direcionando cotovelos para baixo em direção às costelas.',
             diagramType: 'lat_pulldown',
@@ -381,7 +382,7 @@ class StorageService {
             primaryMuscleGroup: 'back',
             weightKg: 90.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 120,
             observations: 'Tronco fixo em 45 graus, puxar a barra até a linha do umbigo.',
             diagramType: 'barbell_row',
@@ -429,7 +430,7 @@ class StorageService {
             primaryMuscleGroup: 'arms',
             weightKg: 42.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 90,
             observations: 'Cotovelos alinhados e estáticos, sem usar embalo da lombar.',
             diagramType: 'bicep_curl',
@@ -475,7 +476,7 @@ class StorageService {
             primaryMuscleGroup: 'legs',
             weightKg: 135.0,
             reps: 3,
-            sets: 5,
+            sets: 3,
             restSeconds: 150,
             observations: 'Agachamento até quebrar a paralela de 90°. Calcanhares firmes.',
             diagramType: 'squat',
@@ -491,7 +492,7 @@ class StorageService {
             primaryMuscleGroup: 'legs',
             weightKg: 280.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 120,
             observations: 'Amplitude máxima sem descolar a lombar do assento.',
             diagramType: 'leg_press',
@@ -507,7 +508,7 @@ class StorageService {
             primaryMuscleGroup: 'legs',
             weightKg: 105.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 120,
             observations: 'Projetar quadril para trás sentindo alongar a cadeia posterior.',
             diagramType: 'romanian_deadlift',
@@ -571,7 +572,7 @@ class StorageService {
             primaryMuscleGroup: 'legs',
             weightKg: 125.0,
             reps: 3,
-            sets: 4,
+            sets: 3,
             restSeconds: 90,
             observations: 'Amplitude vertical máxima, pausa de 2 segundos no ponto mais alto.',
             diagramType: 'squat',

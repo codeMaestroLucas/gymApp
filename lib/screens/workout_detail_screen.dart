@@ -39,8 +39,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
   void _editExerciseDetails(BuildContext context, int index) {
     final ex = _currentWorkout.exercises[index];
-    final weightCtrl = TextEditingController(text: ex.weightKg.toString());
-    final setsCtrl = TextEditingController(text: ex.sets.toString());
+    final weightCtrl = TextEditingController(
+      text: ex.weightKg.toStringAsFixed(ex.weightKg % 1 == 0 ? 0 : 1),
+    );
+    final repsCtrl = TextEditingController(text: ex.reps.toString());
     final restCtrl = TextEditingController(text: ex.restSeconds.toString());
     final obsCtrl = TextEditingController(text: ex.observations);
 
@@ -100,10 +102,10 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
-                      controller: setsCtrl,
+                      controller: repsCtrl,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: 'Repetições (máx 3)',
+                        labelText: 'Repetições',
                         prefixIcon: Icon(Icons.repeat_rounded, size: 18),
                       ),
                     ),
@@ -137,11 +139,13 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    final parsedSets = (int.tryParse(setsCtrl.text) ?? ex.sets).clamp(1, 3);
+                    final parsedWeight = double.tryParse(weightCtrl.text) ?? ex.weightKg;
+                    final parsedReps = int.tryParse(repsCtrl.text) ?? ex.reps;
+                    final validReps = parsedReps > 0 ? parsedReps : 1;
                     final updated = ex.copyWith(
-                      weightKg: double.tryParse(weightCtrl.text) ?? ex.weightKg,
-                      sets: parsedSets,
-                      reps: parsedSets, // Sincroniza repetições com séries (máx 3)
+                      weightKg: parsedWeight,
+                      sets: validReps,
+                      reps: validReps,
                       restSeconds: int.tryParse(restCtrl.text) ?? ex.restSeconds,
                       observations: obsCtrl.text.trim(),
                     );
@@ -485,7 +489,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                     icon: Icons.repeat_rounded,
                     label: 'Repetições',
                     value: '${ex.reps} reps',
-                    subtext: 'Máx 3 reps',
+                    subtext: 'Toque p/ editar',
                     onTap: () => _editExerciseDetails(context, index),
                   ),
                 ),

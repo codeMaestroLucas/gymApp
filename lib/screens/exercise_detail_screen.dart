@@ -3,12 +3,12 @@ import '../models/exercise.dart';
 import '../services/exercise_image_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/exercise_video_player.dart';
-import '../widgets/rest_timer_sheet.dart';
 
 /// Modal e Tela Completa de Detalhes do Exercício.
 /// Ao clicar na imagem de um exercício em qualquer tela do app,
 /// esta tela é exibida apresentando os detalhes completos, parâmetros de carga/reps,
-/// e o vídeo oficial de execução caso exista em source/exercices/videos.
+/// e a animação em GIF da execução caso exista em source/exercices/videos.
+/// Permite editar carga, repetições, descanso e observações diretamente no exercício.
 class ExerciseDetailModal extends StatefulWidget {
   final Exercise exercise;
   final Function(Exercise updated)? onExerciseUpdated;
@@ -45,7 +45,6 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
   String? _imagePath;
   String? _videoPath;
   Map<String, dynamic>? _catalogInfo;
-  int _mediaTab = 0; // 0: Vídeo (se houver), 1: Foto
 
   @override
   void initState() {
@@ -71,7 +70,134 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
         );
 
     _catalogInfo = ExerciseImageService.getExerciseInfo(_ex.name);
-    _mediaTab = (_videoPath != null && _videoPath!.isNotEmpty) ? 0 : 1;
+  }
+
+  void _openEditSheet() {
+    final weightCtrl = TextEditingController(
+      text: _ex.weightKg.toStringAsFixed(_ex.weightKg % 1 == 0 ? 0 : 1),
+    );
+    final repsCtrl = TextEditingController(text: _ex.reps.toString());
+    final restCtrl = TextEditingController(text: _ex.restSeconds.toString());
+    final obsCtrl = TextEditingController(text: _ex.observations);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          decoration: const BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: AppColors.cardBorder, width: 1.5)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Editar ${_ex.name}',
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: weightCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Peso (kg)',
+                        prefixIcon: Icon(Icons.fitness_center_rounded, size: 18),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: repsCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Repetições',
+                        prefixIcon: Icon(Icons.repeat_rounded, size: 18),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: restCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Descanso (s)',
+                        prefixIcon: Icon(Icons.timer_outlined, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: obsCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Observações / Instruções pessoais',
+                  hintText: 'Ex: Focar na descida de 3s, pegada fechada...',
+                  prefixIcon: Icon(Icons.edit_note_rounded, size: 20),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final parsedWeight = double.tryParse(weightCtrl.text) ?? _ex.weightKg;
+                    final parsedReps = int.tryParse(repsCtrl.text) ?? _ex.reps;
+                    final validReps = parsedReps > 0 ? parsedReps : 1;
+                    final parsedRest = int.tryParse(restCtrl.text) ?? _ex.restSeconds;
+                    final updated = _ex.copyWith(
+                      weightKg: parsedWeight,
+                      sets: validReps,
+                      reps: validReps,
+                      restSeconds: parsedRest,
+                      observations: obsCtrl.text.trim(),
+                    );
+                    setState(() {
+                      _ex = updated;
+                    });
+                    widget.onExerciseUpdated?.call(updated);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Salvar Alterações'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -107,7 +233,7 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                 ),
               ),
 
-              // Header com Título e Botão Fechar
+              // Header com Título, Botão de Editar e Botão Fechar
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 4, 12, 10),
                 child: Row(
@@ -167,6 +293,11 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                       ),
                     ),
                     IconButton(
+                      icon: const Icon(Icons.edit_note_rounded, color: AppColors.primaryOrange, size: 24),
+                      tooltip: 'Editar exercício',
+                      onPressed: _openEditSheet,
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -181,41 +312,15 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    // Seletor de Mídia (Vídeo vs Foto) se vídeo existir
+                    // Exibição da Mídia Principal (Vídeo formato GIF em loop 1.25x ou Foto Limpa)
                     if (hasVideo)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildMediaTabButton(
-                                label: 'Vídeo da Execução',
-                                icon: Icons.play_circle_fill_rounded,
-                                isSelected: _mediaTab == 0,
-                                onTap: () => setState(() => _mediaTab = 0),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildMediaTabButton(
-                                label: 'Foto Anatômica',
-                                icon: Icons.image_rounded,
-                                isSelected: _mediaTab == 1,
-                                onTap: () => setState(() => _mediaTab = 1),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // Exibição da Mídia Principal (Player de Vídeo ou Imagem Ampliada)
-                    if (hasVideo && _mediaTab == 0)
                       ExerciseVideoPlayer(
                         videoPath: _videoPath!,
                         thumbnailPath: _imagePath,
                         height: 230,
                         autoPlay: true,
                         looping: true,
+                        playbackSpeed: 1.25,
                       )
                     else
                       Container(
@@ -227,75 +332,61 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: AppColors.cardBorder, width: 1.2),
                         ),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Image.asset(
-                                _imagePath!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => const Center(
-                                  child: Icon(Icons.fitness_center_rounded, size: 48, color: AppColors.primaryOrange),
-                                ),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Image.asset(
+                              _imagePath!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => const Center(
+                                child: Icon(Icons.fitness_center_rounded, size: 48, color: AppColors.primaryOrange),
                               ),
                             ),
-                            Positioned(
-                              top: 10,
-                              left: 10,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.75),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.cardBorder),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.photo_library_outlined, size: 11, color: Colors.white),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'FOTO OFICIAL',
-                                      style: TextStyle(fontSize: 8.5, color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
 
                     const SizedBox(height: 16),
 
-                    // Parâmetros de Prescrição do Exercício
+                    // Parâmetros de Prescrição do Exercício (clicáveis para edição rápida)
                     Row(
                       children: [
                         Expanded(
-                          child: _buildMetricCard(
-                            icon: Icons.fitness_center_rounded,
-                            label: 'Carga',
-                            value: '${_ex.weightKg.toStringAsFixed(_ex.weightKg % 1 == 0 ? 0 : 1)} kg',
-                            accentColor: AppColors.primaryOrange,
+                          child: InkWell(
+                            onTap: _openEditSheet,
+                            borderRadius: BorderRadius.circular(12),
+                            child: _buildMetricCard(
+                              icon: Icons.fitness_center_rounded,
+                              label: 'Carga',
+                              value: '${_ex.weightKg.toStringAsFixed(_ex.weightKg % 1 == 0 ? 0 : 1)} kg',
+                              accentColor: AppColors.primaryOrange,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _buildMetricCard(
-                            icon: Icons.repeat_rounded,
-                            label: 'Repetições',
-                            value: '${_ex.reps} reps',
-                            accentColor: AppColors.accentYellow,
+                          child: InkWell(
+                            onTap: _openEditSheet,
+                            borderRadius: BorderRadius.circular(12),
+                            child: _buildMetricCard(
+                              icon: Icons.repeat_rounded,
+                              label: 'Repetições',
+                              value: '${_ex.reps} reps',
+                              accentColor: AppColors.accentYellow,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _buildMetricCard(
-                            icon: Icons.timer_outlined,
-                            label: 'Descanso',
-                            value: '${_ex.restSeconds}s',
-                            accentColor: const Color(0xFF00E676),
+                          child: InkWell(
+                            onTap: _openEditSheet,
+                            borderRadius: BorderRadius.circular(12),
+                            child: _buildMetricCard(
+                              icon: Icons.timer_outlined,
+                              label: 'Descanso',
+                              value: '${_ex.restSeconds}s',
+                              accentColor: const Color(0xFF00E676),
+                            ),
                           ),
                         ),
                       ],
@@ -348,7 +439,7 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                       const SizedBox(height: 16),
                     ],
 
-                    // Observações do Treinador / Anotações
+                    // Observações do Treinador / Anotações (com atalho para editar)
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -363,11 +454,11 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.edit_note_rounded, size: 16, color: AppColors.primaryOrange),
-                              SizedBox(width: 6),
-                              Flexible(
+                              const Icon(Icons.edit_note_rounded, size: 16, color: AppColors.primaryOrange),
+                              const SizedBox(width: 6),
+                              const Expanded(
                                 child: Text(
                                   'OBSERVAÇÕES E NOTAS TÉCNICAS',
                                   style: TextStyle(
@@ -380,13 +471,25 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: _openEditSheet,
+                                child: const Text(
+                                  'Editar',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _ex.observations.isNotEmpty
                                 ? _ex.observations
-                                : 'Sem observações adicionais. Foque na técnica correta e na sobrecarga progressiva com baixas repetições.',
+                                : 'Sem observações adicionais. Toque em "Editar" para adicionar notas sobre execução, pegada ou desconfortos.',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12.5,
@@ -436,31 +539,7 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                       const SizedBox(height: 14),
                     ],
 
-                    // Botão para Iniciar Cronômetro de Descanso
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          RestTimerSheet.show(
-                            context,
-                            initialSeconds: _ex.restSeconds,
-                            exerciseName: _ex.name,
-                          );
-                        },
-                        icon: const Icon(Icons.timer_outlined, size: 18, color: AppColors.accentYellow),
-                        label: Text(
-                          'Testar Cronômetro de Descanso (${_ex.restSeconds}s)',
-                          style: const TextStyle(color: AppColors.accentYellow, fontWeight: FontWeight.bold),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.accentYellow),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -468,48 +547,6 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildMediaTabButton({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryOrange : AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryOrange : AppColors.cardBorder,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: isSelected ? Colors.white : AppColors.textSecondary),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

@@ -440,32 +440,64 @@ void main() {
       exercises: [testExercise],
     );
 
+    Exercise? updatedExerciseResult;
+
     await tester.pumpWidget(
       MaterialApp(
         home: WorkoutDetailScreen(
           workout: testWorkout,
-          onWorkoutUpdated: (_) {},
+          onWorkoutUpdated: (updatedW) {
+            updatedExerciseResult = updatedW.exercises.first;
+          },
         ),
       ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    // 1. Verifica se a imagem do exercício é exibida na tela de exercícios do treino
+    // 1. Verifica ausência de labels removidas na lista (VÍDEO DE EXECUÇÃO, Vetor, Músculos, DIAGRAMA OFICIAL)
+    expect(find.text('VÍDEO DE EXECUÇÃO'), findsNothing);
+    expect(find.text('Vetor'), findsNothing);
+    expect(find.text('DIAGRAMA OFICIAL'), findsNothing);
     expect(find.text('Supino Reto com Barra'), findsOneWidget);
     expect(find.byType(Image), findsWidgets);
 
-    // 2. Clica na imagem do exercício específico
+    // 2. Clica na imagem do exercício específico para abrir o modal de detalhes
     final imageWidget = find.byType(Image).first;
     await tester.tap(imageWidget);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    // 3. Verifica se o modal detalhado abriu com os detalhes e aba de vídeo de execução
-    expect(find.text('Vídeo da Execução'), findsOneWidget);
-    expect(find.text('Foto Anatômica'), findsOneWidget);
+    // 3. Verifica que abas e botões desnecessários foram removidos (Vídeo da Execução, Foto Anatômica, Testar cronometro)
+    expect(find.text('Vídeo da Execução'), findsNothing);
+    expect(find.text('Foto Anatômica'), findsNothing);
+    expect(find.textContaining('Testar Cronômetro'), findsNothing);
+    expect(find.textContaining('Vídeo de execução não disponível'), findsNothing);
     expect(find.text('MÚSCULOS ALVO'), findsOneWidget);
     expect(find.text('OBSERVAÇÕES E NOTAS TÉCNICAS'), findsOneWidget);
     expect(find.textContaining('Manter escápulas aduzidas'), findsWidgets);
+
+    // 4. Edita o exercício diretamente pelo modal detalhado e permite reps > 3
+    final editButton = find.byTooltip('Editar exercício');
+    await tester.tap(editButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Editar Supino Reto com Barra'), findsOneWidget);
+    // Verifica que o campo de repetições inicia exatamente com o valor do exercício (3)
+    final textFields = find.byType(TextField);
+    expect(textFields, findsNWidgets(4));
+
+    // Altera repetições para 8 reps (anteriormente era clamped a 3)
+    await tester.enterText(textFields.at(1), '8');
+    await tester.pump();
+
+    await tester.tap(find.text('Salvar Alterações'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // Verifica que o modal e a tela pai receberam 8 reps sem ser travado em 3
+    expect(find.text('8 reps'), findsWidgets);
+    expect(updatedExerciseResult?.reps, equals(8));
   });
 }

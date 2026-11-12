@@ -23,8 +23,6 @@ class WatchExerciseDetailScreen extends StatefulWidget {
 }
 
 class _WatchExerciseDetailScreenState extends State<WatchExerciseDetailScreen> {
-  int _mediaMode = 0; // 0: Imagem, 1: Vídeo
-
   @override
   Widget build(BuildContext context) {
     final imagePath = widget.exercise.imageUrl ??
@@ -87,37 +85,15 @@ class _WatchExerciseDetailScreenState extends State<WatchExerciseDetailScreen> {
 
               const SizedBox(height: 6),
 
-              // Botões de alternância Foto vs Vídeo (caso o exercício tenha vídeo)
-              if (hasVideo) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildModeButton(
-                      label: 'FOTO',
-                      icon: Icons.image_rounded,
-                      isSelected: _mediaMode == 0,
-                      onTap: () => setState(() => _mediaMode = 0),
-                    ),
-                    const SizedBox(width: 6),
-                    _buildModeButton(
-                      label: 'VÍDEO',
-                      icon: Icons.play_circle_fill_rounded,
-                      isSelected: _mediaMode == 1,
-                      onTap: () => setState(() => _mediaMode = 1),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-              ],
-
-              // Mídia Principal (Vídeo ou Foto)
-              if (hasVideo && _mediaMode == 1)
+              // Mídia Principal (Vídeo formato GIF em loop 1.25x ou Foto Limpa)
+              if (hasVideo)
                 ExerciseVideoPlayer(
                   videoPath: videoPath,
                   thumbnailPath: imagePath,
                   height: 118,
                   autoPlay: true,
                   looping: true,
+                  playbackSpeed: 1.25,
                 )
               else
                 Container(
@@ -273,44 +249,6 @@ class _WatchExerciseDetailScreenState extends State<WatchExerciseDetailScreen> {
               const SizedBox(height: 16),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModeButton({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryOrange : AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryOrange : AppColors.cardBorder,
-            width: 0.8,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 10, color: isSelected ? Colors.white : AppColors.textSecondary),
-            const SizedBox(width: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 8.5,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -169,13 +169,13 @@ class _WatchActiveWorkoutScreenState extends State<WatchActiveWorkoutScreen> {
     });
   }
 
-  /// Permite modificar o número de repetições (1 a 3 reps)
+  /// Permite modificar o número de repetições
   void _adjustReps(int delta, [int? targetIndex]) {
     HapticFeedback.selectionClick();
     final index = targetIndex ?? _currentExerciseIndex;
     setState(() {
       final ex = _activeWorkout.exercises[index];
-      final newReps = (ex.reps + delta).clamp(1, 3);
+      final newReps = (ex.reps + delta).clamp(1, 100);
       ex.reps = newReps;
       ex.sets = newReps;
     });

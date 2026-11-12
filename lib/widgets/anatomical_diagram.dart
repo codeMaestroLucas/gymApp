@@ -38,9 +38,7 @@ class AnatomicalDiagram extends StatefulWidget {
 class _AnatomicalDiagramState extends State<AnatomicalDiagram>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
-  int _activeViewIndex = 0; // 0: Imagem do Exercício, 1: Postura/Biomecânica, 2: Anatomia Muscular
   String? _resolvedImagePath;
-  String? _resolvedVideoPath;
 
   @override
   void initState() {
@@ -59,33 +57,19 @@ class _AnatomicalDiagramState extends State<AnatomicalDiagram>
       primaryMuscleGroup: widget.primaryMuscleGroup,
       diagramType: widget.diagramType,
     );
-
-    _resolvedVideoPath = widget.videoUrl ??
-        ExerciseImageService.getVideoForExercise(
-          exerciseName: widget.exerciseName,
-          primaryMuscleGroup: widget.primaryMuscleGroup,
-          diagramType: widget.diagramType,
-        );
   }
 
   @override
   void didUpdateWidget(covariant AnatomicalDiagram oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.exerciseName != widget.exerciseName ||
-        oldWidget.imageUrl != widget.imageUrl ||
-        oldWidget.videoUrl != widget.videoUrl) {
+        oldWidget.imageUrl != widget.imageUrl) {
       _resolvedImagePath = ExerciseImageService.getImageForExercise(
         exerciseName: widget.exerciseName,
         explicitImageUrl: widget.imageUrl,
         primaryMuscleGroup: widget.primaryMuscleGroup,
         diagramType: widget.diagramType,
       );
-      _resolvedVideoPath = widget.videoUrl ??
-          ExerciseImageService.getVideoForExercise(
-            exerciseName: widget.exerciseName,
-            primaryMuscleGroup: widget.primaryMuscleGroup,
-            diagramType: widget.diagramType,
-          );
     }
   }
 
@@ -113,248 +97,92 @@ class _AnatomicalDiagramState extends State<AnatomicalDiagram>
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          // Fundo com sutil malha grid técnica
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _TechGridPainter(),
-            ),
-          ),
-
-          // Área da visualização principal
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _animController,
-              builder: (context, child) {
-                if (_activeViewIndex == 0 && _resolvedImagePath != null) {
-                  return _buildAssetImageView();
-                } else if (_activeViewIndex == 1 || _resolvedImagePath == null) {
-                  return CustomPaint(
-                    painter: _ExerciseExecutionPainter(
-                      diagramType: widget.diagramType,
-                      phaseProgress: _animController.value,
-                    ),
-                  );
-                } else {
-                  return CustomPaint(
-                    painter: _MuscleAnatomyPainter(
-                      muscleGroup: widget.primaryMuscleGroup,
-                      targetMuscles: widget.targetMuscles,
-                      pulseProgress: _animController.value,
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-
-          // Seletor de visualização (Foto vs Postura vs Anatomia)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground.withValues(alpha: 0.90),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.cardBorder),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
+          children: [
+            // Fundo com sutil malha grid técnica
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _TechGridPainter(),
               ),
+            ),
+
+            // Área da visualização principal (Foto do Exercício)
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _animController,
+                builder: (context, child) {
+                  if (_resolvedImagePath != null) {
+                    return _buildAssetImageView();
+                  } else {
+                    return CustomPaint(
+                      painter: _ExerciseExecutionPainter(
+                        diagramType: widget.diagramType,
+                        phaseProgress: _animController.value,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+
+            // Legenda inferior com grupos musculares
+            Positioned(
+              left: 12,
+              bottom: 8,
+              right: 12,
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildTabPill(
-                    icon: Icons.image_rounded,
-                    label: 'Foto',
-                    isSelected: _activeViewIndex == 0,
-                    onTap: () => setState(() => _activeViewIndex = 0),
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryOrange,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                  const SizedBox(width: 2),
-                  _buildTabPill(
-                    icon: Icons.fitness_center_rounded,
-                    label: 'Vetor',
-                    isSelected: _activeViewIndex == 1,
-                    onTap: () => setState(() => _activeViewIndex = 1),
-                  ),
-                  const SizedBox(width: 2),
-                  _buildTabPill(
-                    icon: Icons.accessibility_new_rounded,
-                    label: 'Músculos',
-                    isSelected: _activeViewIndex == 2,
-                    onTap: () => setState(() => _activeViewIndex = 2),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      widget.targetMuscles.isNotEmpty
+                          ? widget.targetMuscles.join(' • ')
+                          : widget.primaryMuscleGroup.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-
-          // Legenda inferior com grupos musculares e indicador
-          Positioned(
-            left: 12,
-            bottom: 8,
-            right: 12,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryOrange,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
-                          widget.targetMuscles.isNotEmpty
-                              ? widget.targetMuscles.join(' • ')
-                              : widget.primaryMuscleGroup.toUpperCase(),
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryOrange.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppColors.primaryOrange.withValues(alpha: 0.4),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    _activeViewIndex == 0
-                        ? 'DIAGRAMA OFICIAL'
-                        : (_activeViewIndex == 1 ? 'FASE DINÂMICA' : 'MAPA MUSCULAR'),
-                    style: const TextStyle(
-                      color: AppColors.primaryOrange,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildAssetImageView() {
-    final hasVideo = _resolvedVideoPath != null && _resolvedVideoPath!.isNotEmpty;
-
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            padding: const EdgeInsets.only(top: 24, bottom: 26, left: 14, right: 14),
-            alignment: Alignment.center,
-            child: Image.asset(
-              _resolvedImagePath!,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                // Se falhar o carregamento do arquivo, renderiza o diagrama vetorial
-                return CustomPaint(
-                  painter: _ExerciseExecutionPainter(
-                    diagramType: widget.diagramType,
-                    phaseProgress: _animController.value,
-                  ),
-                );
-              },
+    return Container(
+      padding: const EdgeInsets.only(top: 10, bottom: 26, left: 14, right: 14),
+      alignment: Alignment.center,
+      child: Image.asset(
+        _resolvedImagePath!,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          // Se falhar o carregamento do arquivo, renderiza o diagrama vetorial
+          return CustomPaint(
+            painter: _ExerciseExecutionPainter(
+              diagramType: widget.diagramType,
+              phaseProgress: _animController.value,
             ),
-          ),
-          // Badge indicativo de clique para ver vídeo/detalhes
-          Positioned(
-            top: 8,
-            left: 10,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: hasVideo ? AppColors.primaryOrange : AppColors.cardBorder,
-                  width: 0.8,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    hasVideo ? Icons.play_circle_fill_rounded : Icons.zoom_in_rounded,
-                    size: 11,
-                    color: hasVideo ? AppColors.primaryOrange : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    hasVideo ? 'VÍDEO DE EXECUÇÃO' : 'VER DETALHES',
-                    style: TextStyle(
-                      fontSize: 8,
-                      color: hasVideo ? Colors.white : AppColors.textSecondary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabPill({
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryOrange : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 11,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -646,158 +474,4 @@ class _ExerciseExecutionPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ExerciseExecutionPainter oldDelegate) =>
       oldDelegate.phaseProgress != phaseProgress || oldDelegate.diagramType != diagramType;
-}
-
-/// Painter para anatomia humana com destaque muscular néon nos músculos alvo
-class _MuscleAnatomyPainter extends CustomPainter {
-  final String muscleGroup;
-  final List<String> targetMuscles;
-  final double pulseProgress;
-
-  _MuscleAnatomyPainter({
-    required this.muscleGroup,
-    required this.targetMuscles,
-    required this.pulseProgress,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width * 0.45, size.height * 0.48);
-
-    final basePaint = Paint()
-      ..color = const Color(0xFF2C2424)
-      ..style = PaintingStyle.fill;
-
-    final outlinePaint = Paint()
-      ..color = const Color(0xFF483E3E)
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
-
-    final glowAlpha = (0.7 + (0.3 * pulseProgress)).clamp(0.0, 1.0);
-    final activeHighlight = Paint()
-      ..color = AppColors.primaryOrange.withValues(alpha: glowAlpha)
-      ..style = PaintingStyle.fill;
-
-    final secondaryHighlight = Paint()
-      ..color = AppColors.accentYellow.withValues(alpha: glowAlpha * 0.8)
-      ..style = PaintingStyle.fill;
-
-    // Cabeça
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(center.dx, center.dy - 56), width: 18, height: 22),
-      basePaint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(center.dx, center.dy - 56), width: 18, height: 22),
-      outlinePaint,
-    );
-
-    // Trapézio
-    final isTrapActive = _isMuscleActive(['trapézio', 'costas', 'back', 'ombros']);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx, center.dy - 42), width: 22, height: 12),
-        const Radius.circular(4),
-      ),
-      isTrapActive ? secondaryHighlight : basePaint,
-    );
-
-    // Peitoral Maior
-    final isChest = _isMuscleActive(['peito', 'peitoral', 'chest']);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx - 12, center.dy - 25), width: 20, height: 18),
-        const Radius.circular(5),
-      ),
-      isChest ? activeHighlight : basePaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx + 12, center.dy - 25), width: 20, height: 18),
-        const Radius.circular(5),
-      ),
-      isChest ? activeHighlight : basePaint,
-    );
-
-    // Ombros / Deltoides
-    final isShoulders = _isMuscleActive(['ombro', 'deltoide', 'shoulders']);
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(center.dx - 27, center.dy - 30), width: 14, height: 16),
-      isShoulders ? activeHighlight : (isChest ? secondaryHighlight : basePaint),
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(center.dx + 27, center.dy - 30), width: 14, height: 16),
-      isShoulders ? activeHighlight : (isChest ? secondaryHighlight : basePaint),
-    );
-
-    // Braços (Bíceps / Tríceps)
-    final isArms = _isMuscleActive(['bíceps', 'tríceps', 'braço', 'arms', 'antebraço']);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx - 32, center.dy - 10), width: 10, height: 22),
-        const Radius.circular(4),
-      ),
-      isArms ? activeHighlight : (isChest ? secondaryHighlight : basePaint),
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx + 32, center.dy - 10), width: 10, height: 22),
-        const Radius.circular(4),
-      ),
-      isArms ? activeHighlight : (isChest ? secondaryHighlight : basePaint),
-    );
-
-    // Abdômen e Core
-    final isCore = _isMuscleActive(['abdômen', 'core', 'reto abdominal', 'oblíquos']);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx, center.dy - 6), width: 24, height: 18),
-        const Radius.circular(4),
-      ),
-      isCore ? activeHighlight : basePaint,
-    );
-
-    // Pernas (Quadríceps e Glúteos)
-    final isLegs = _isMuscleActive(['pernas', 'quadríceps', 'glúteo', 'coxas', 'legs']);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx - 11, center.dy + 20), width: 17, height: 32),
-        const Radius.circular(6),
-      ),
-      isLegs ? activeHighlight : basePaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx + 11, center.dy + 20), width: 17, height: 32),
-        const Radius.circular(6),
-      ),
-      isLegs ? activeHighlight : basePaint,
-    );
-
-    // Panturrilhas
-    final isCalves = _isMuscleActive(['panturrilha', 'calves', 'pernas']);
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(center.dx - 11, center.dy + 48), width: 13, height: 20),
-      isCalves ? activeHighlight : basePaint,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(center.dx + 11, center.dy + 48), width: 13, height: 20),
-      isCalves ? activeHighlight : basePaint,
-    );
-  }
-
-  bool _isMuscleActive(List<String> keywords) {
-    final lowerGroup = muscleGroup.toLowerCase();
-    for (final kw in keywords) {
-      if (lowerGroup.contains(kw)) return true;
-      for (final t in targetMuscles) {
-        if (t.toLowerCase().contains(kw)) return true;
-      }
-    }
-    return false;
-  }
-
-  @override
-  bool shouldRepaint(covariant _MuscleAnatomyPainter oldDelegate) =>
-      oldDelegate.pulseProgress != pulseProgress || oldDelegate.muscleGroup != muscleGroup;
 }
