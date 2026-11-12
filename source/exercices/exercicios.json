@@ -1178,7 +1178,7 @@
   {
     "nome": "EZ Barbell Spider Curl",
     "caminho_imagem": "source/exercices/images/biceps/EZ Barbell Spider Curl_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/biceps/EZ Barbell Spider Curl.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Bíceps"
   },
@@ -1423,7 +1423,7 @@
   {
     "nome": "Ankle Circles",
     "caminho_imagem": "source/exercices/images/calves/Ankle Circles_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Ankle Circles.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Panturrilhas"
   },
@@ -1465,7 +1465,7 @@
   {
     "nome": "Barbell Seated Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Barbell Seated Calf Raise_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Barbell Seated Calf Raise.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Panturrilhas"
   },
@@ -1479,7 +1479,7 @@
   {
     "nome": "Barbell Standing Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Barbell Standing Calf Raise_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Barbell Standing Calf Raise.mp4",
     "nivel": "avançado",
     "grupo_muscular": "Panturrilhas"
   },
@@ -1626,7 +1626,7 @@
   {
     "nome": "Dumbbell Single Leg Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Dumbbell Single Leg Calf Raise_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Dumbbell Single Leg Calf Raise.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Panturrilhas"
   },
@@ -1654,7 +1654,7 @@
   {
     "nome": "Dumbbell Standing Single Leg Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Dumbbell Standing Single Leg Calf Raise_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Dumbbell Standing Single Leg Calf Raise.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Panturrilhas"
   },
@@ -1941,7 +1941,7 @@
   {
     "nome": "Smith Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Smith Calf Raise_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Smith Calf Raise.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Panturrilhas"
   },
@@ -1962,7 +1962,7 @@
   {
     "nome": "Smith Reverse Calf Raises",
     "caminho_imagem": "source/exercices/images/calves/Smith Reverse Calf Raises_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Smith Reverse Calf Raises.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Panturrilhas"
   },
@@ -1983,7 +1983,7 @@
   {
     "nome": "Smith Standing Leg Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Smith Standing Leg Calf Raise_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Smith Standing Leg Calf Raise.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Panturrilhas"
   },
@@ -2032,21 +2032,21 @@
   {
     "nome": "Standing Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Standing Calf Raise_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Standing Calf Raise.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Panturrilhas"
   },
   {
     "nome": "Standing Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Standing Calf Raise_3.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Standing Calf Raise.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Panturrilhas"
   },
   {
     "nome": "Standing Calf Raise",
     "caminho_imagem": "source/exercices/images/calves/Standing Calf Raise_4.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/calves/Standing Calf Raise.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Panturrilhas"
   },
@@ -2172,7 +2172,7 @@
   {
     "nome": "Bicycle Recline Walk",
     "caminho_imagem": "source/exercices/images/cardio/Bicycle Recline Walk_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/cardio/Bicycle Recline Walk.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Cardio"
   },
@@ -2354,7 +2354,7 @@
   {
     "nome": "High Knee Squat",
     "caminho_imagem": "source/exercices/images/cardio/High Knee Squat_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/cardio/High Knee Squat.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Cardio"
   },
@@ -3103,7 +3103,7 @@
   {
     "nome": "Cable Standing Reverse Grip Curl",
     "caminho_imagem": "source/exercices/images/forearms/Cable Standing Reverse Grip Curl_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/forearms/Cable Standing Reverse Grip Curl.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Antebraços"
   },
@@ -3187,7 +3187,7 @@
   {
     "nome": "Dumbbell Over Bench Revers Wrist Curl",
     "caminho_imagem": "source/exercices/images/forearms/Dumbbell Over Bench Revers Wrist Curl_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/forearms/Dumbbell Over Bench Revers Wrist Curl.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Antebraços"
   },
@@ -3509,7 +3509,7 @@
   {
     "nome": "Reverse Wrist Curl",
     "caminho_imagem": "source/exercices/images/forearms/Reverse Wrist Curl_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/forearms/Reverse Wrist Curl_1.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Antebraços"
   },
@@ -3726,7 +3726,7 @@
   {
     "nome": "Dumbbell Swing",
     "caminho_imagem": "source/exercices/images/hamstrings/Dumbbell Swing_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hamstrings/Dumbbell Swing.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Posterior de Coxa"
   },
@@ -3796,7 +3796,7 @@
   {
     "nome": "Inverse Leg Curl",
     "caminho_imagem": "source/exercices/images/hamstrings/Inverse Leg Curl_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hamstrings/Inverse Leg Curl.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Posterior de Coxa"
   },
@@ -3999,7 +3999,7 @@
   {
     "nome": "Self assisted Inverse Leg Curl",
     "caminho_imagem": "source/exercices/images/hamstrings/Self assisted Inverse Leg Curl_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hamstrings/Self-Assisted Inverse Leg Curl.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Posterior de Coxa"
   },
@@ -4300,7 +4300,7 @@
   {
     "nome": "Cable Hip Abduction",
     "caminho_imagem": "source/exercices/images/hips/Cable Hip Abduction_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hips/Cable hip abduction.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Glúteos / Quadril"
   },
@@ -4573,7 +4573,7 @@
   {
     "nome": "Lever Hip Thrust",
     "caminho_imagem": "source/exercices/images/hips/Lever Hip Thrust_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hips/Lever Hip Thrust.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Glúteos / Quadril"
   },
@@ -4601,7 +4601,7 @@
   {
     "nome": "Lever Seated Hip Abduction",
     "caminho_imagem": "source/exercices/images/hips/Lever Seated Hip Abduction_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hips/Lever Seated Hip Abduction_1.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Glúteos / Quadril"
   },
@@ -4615,7 +4615,7 @@
   {
     "nome": "Lever Seated Hip Adduction",
     "caminho_imagem": "source/exercices/images/hips/Lever Seated Hip Adduction_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hips/Lever Seated Hip Adduction.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Glúteos / Quadril"
   },
@@ -4881,7 +4881,7 @@
   {
     "nome": "Vertical Leg Raise",
     "caminho_imagem": "source/exercices/images/hips/Vertical Leg Raise_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/hips/Vertical Leg Raise.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Glúteos / Quadril"
   },
@@ -5532,7 +5532,7 @@
   {
     "nome": "Lever Leg Extension",
     "caminho_imagem": "source/exercices/images/quadriceps/Lever Leg Extension_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/quadriceps/Lever Leg Extension.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Quadríceps"
   },
@@ -5567,7 +5567,7 @@
   {
     "nome": "Lever Seated Leg Press",
     "caminho_imagem": "source/exercices/images/quadriceps/Lever Seated Leg Press_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/quadriceps/Lever Seated Leg Press.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Quadríceps"
   },
@@ -6022,7 +6022,7 @@
   {
     "nome": "Cable Rear Delt Row",
     "caminho_imagem": "source/exercices/images/shoulders/Cable Rear Delt Row_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/shoulders/Cable Rear Delt Row.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Ombros"
   },
@@ -6218,7 +6218,7 @@
   {
     "nome": "Dumbbell Seated Lateral Raise",
     "caminho_imagem": "source/exercices/images/shoulders/Dumbbell Seated Lateral Raise_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/shoulders/Dumbbell Seated Lateral Raise.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Ombros"
   },
@@ -6407,14 +6407,14 @@
   {
     "nome": "Lever Shoulder Press",
     "caminho_imagem": "source/exercices/images/shoulders/Lever Shoulder Press_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/shoulders/Lever Shoulder Press.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Ombros"
   },
   {
     "nome": "Lever Shoulder Press",
     "caminho_imagem": "source/exercices/images/shoulders/Lever Shoulder Press_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/shoulders/Lever Shoulder Press.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Ombros"
   },
@@ -6820,14 +6820,14 @@
   {
     "nome": "Cable Triceps Pushdown",
     "caminho_imagem": "source/exercices/images/triceps/Cable Triceps Pushdown_2.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/upperArms/Cable Triceps Pushdown.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Tríceps"
   },
   {
     "nome": "Cable Triceps Pushdown",
     "caminho_imagem": "source/exercices/images/triceps/Cable Triceps Pushdown_3.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/upperArms/Cable Triceps Pushdown.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Tríceps"
   },
@@ -8101,7 +8101,7 @@
   {
     "nome": "Bridge - Mountain Climber",
     "caminho_imagem": "source/exercices/images/waist/Bridge - Mountain Climber_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/waist/Bridge - Mountain Climber.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Abdômen / Lombar"
   },
@@ -8563,7 +8563,7 @@
   {
     "nome": "Scissors",
     "caminho_imagem": "source/exercices/images/waist/Scissors_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/waist/Scissors.mp4",
     "nivel": "intermediário",
     "grupo_muscular": "Abdômen / Lombar"
   },
@@ -8675,7 +8675,7 @@
   {
     "nome": "Weighted Crunch",
     "caminho_imagem": "source/exercices/images/waist/Weighted Crunch_1.png",
-    "caminho_video": null,
+    "caminho_video": "source/exercices/videos/waist/Weighted Crunch.mp4",
     "nivel": "iniciante",
     "grupo_muscular": "Abdômen / Lombar"
   },
