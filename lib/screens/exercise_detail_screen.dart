@@ -320,7 +320,7 @@ class _ExerciseDetailModalState extends State<ExerciseDetailModal> {
                         height: 230,
                         autoPlay: true,
                         looping: true,
-                        playbackSpeed: 1.25,
+                        playbackSpeed: 1.75,
                       )
                     else
                       Container(

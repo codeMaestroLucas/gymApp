@@ -5,7 +5,7 @@ import 'package:video_player/video_player.dart';
 import '../theme/app_colors.dart';
 
 /// Visualizador em formato GIF para reprodução dos vídeos de execução dos exercícios.
-/// Executa automaticamente em loop com velocidade de 1.25x, sem controles de play/pause
+/// Executa automaticamente em loop com velocidade aumentada (1.75x), sem controles de play/pause
 /// ou scrubber, funcionando exatamente como uma animação contínua (GIF).
 class ExerciseVideoPlayer extends StatefulWidget {
   final String videoPath;
@@ -14,6 +14,7 @@ class ExerciseVideoPlayer extends StatefulWidget {
   final bool looping;
   final double playbackSpeed;
   final double height;
+  final bool invertColors;
 
   const ExerciseVideoPlayer({
     super.key,
@@ -21,8 +22,9 @@ class ExerciseVideoPlayer extends StatefulWidget {
     this.thumbnailPath,
     this.autoPlay = true,
     this.looping = true,
-    this.playbackSpeed = 1.25,
+    this.playbackSpeed = 1.75,
     this.height = 220,
+    this.invertColors = false,
   });
 
   @override
@@ -111,17 +113,24 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isVideoReady = _isInitialized && !_hasError && _controller != null;
+
     return Container(
       height: widget.height,
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFF0D0B0B),
+        color: (isVideoReady && !widget.invertColors) ? Colors.white : const Color(0xFF0D0B0B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryOrange.withValues(alpha: 0.35), width: 1.2),
+        border: Border.all(
+          color: isVideoReady
+              ? AppColors.primaryOrange.withValues(alpha: 0.6)
+              : AppColors.primaryOrange.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -139,10 +148,24 @@ class _ExerciseVideoPlayerState extends State<ExerciseVideoPlayer> {
 
   Widget _buildVideoSurface() {
     final controller = _controller!;
-    return AspectRatio(
+    Widget player = AspectRatio(
       aspectRatio: controller.value.aspectRatio > 0 ? controller.value.aspectRatio : (16 / 9),
       child: VideoPlayer(controller),
     );
+
+    if (widget.invertColors) {
+      player = ColorFiltered(
+        colorFilter: const ColorFilter.matrix([
+          -1,  0,  0, 0, 255,
+           0, -1,  0, 0, 255,
+           0,  0, -1, 0, 255,
+           0,  0,  0, 1,   0,
+        ]),
+        child: player,
+      );
+    }
+
+    return player;
   }
 
   Widget _buildLoadingState() {

@@ -93,7 +93,7 @@ class _WatchExerciseDetailScreenState extends State<WatchExerciseDetailScreen> {
                   height: 118,
                   autoPlay: true,
                   looping: true,
-                  playbackSpeed: 1.25,
+                  playbackSpeed: 1.75,
                 )
               else
                 Container(
